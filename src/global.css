@@ -1,0 +1,186 @@
+/* variables */
+
+:root {
+  --base-1: #f2f2f2;
+  --primary-1: #42b3ad;
+  --secondary-1: #5d280a;
+
+  --base-2: #fefefe;
+  --primary-2: #fc5d03;
+  --secondary-2: #661c66;
+
+  --base-3: #fefefe;
+  --primary-3: #d4baa1;
+  --secondary-3: #4b0017;
+
+  --base-4: #fefefe;
+  --primary-4: #ea534a;
+  --secondary-4: #4d2095;
+
+  --base-5: #fefefe;
+  --primary-5: darkgray;
+  --secondary-5: #0f0500;
+
+  --base: var(--base-1);
+  --primary: var(--primary-1);
+  --secondary: var(--secondary-1);
+
+  --text: #555;
+  --text-contrast: #fff;
+  --white: #fff;
+
+  --inactive: #dedede;
+  --error: #ff4136;
+
+  --xs: 8px;
+  --sm: 16px;
+  --md: 32px;
+  --lg: 40px;
+  --xl: 64px;
+}
+
+/* typography */
+
+h1 {
+  font-size: 1.7rem;
+}
+
+h1,
+h2 {
+  font-family: var(--heading-font);
+  text-transform: uppercase;
+}
+
+h2 {
+  padding-bottom: 1rem;
+  color: var(--secondary);
+  font-size: 1.35rem;
+}
+
+h3 {
+  color: var(--secondary);
+}
+
+a,
+button,
+h3,
+input,
+label,
+p,
+span {
+  font-family: var(--text-font);
+}
+
+p {
+  font-size: 1.04rem;
+  padding: 0.75rem 0;
+}
+
+/* elements */
+
+button,
+a.button {
+  align-items: center;
+  background-color: var(--secondary);
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0px 8px 20px 0px rgba(0, 0, 0, 0.25);
+  color: var(--text-contrast);
+  display: flex;
+  font-size: 0.8rem;
+  font-weight: bold;
+  height: 56px;
+  justify-content: center;
+  padding: 0 var(--md);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+button:hover,
+a.button:hover {
+  transform: scale(1.01);
+}
+
+button:active,
+a.button:active {
+  transform: scale(0.99);
+}
+
+button[disabled],
+a.button[disabled] {
+  background-color: gray !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* section patterns */
+
+.section {
+  padding: 58px var(--xs);
+}
+
+.section-content {
+  margin: 0 auto;
+  max-width: 50em;
+}
+
+.section.primary {
+  background-color: var(--primary);
+  color: var(--text-contrast);
+}
+
+.section.primary-to-base {
+  background: linear-gradient(180deg, var(--primary) 80%, var(--base) 80%);
+  color: var(--text-contrast);
+}
+
+.section.white {
+  background-color: var(--white);
+  color: var(--text);
+}
+
+.section.base {
+  background-color: var(--base);
+  color: var(--text);
+}
+
+.section.secondary {
+  background-color: var(--secondary);
+  color: var(--text-contrast);
+}
+
+/* random */
+
+* {
+  transition-property: all;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+}
+
+button,
+a.button {
+  transition-duration: 0.15s;
+}
+
+hr {
+  border: none;
+  height: 2px;
+  background-color: #dedede;
+}
+
+label {
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+input {
+  border-radius: 8px;
+  border: 2px solid var(--secondary);
+  padding: 12px;
+  width: 100%;
+}

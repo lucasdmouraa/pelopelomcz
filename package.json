@@ -1,0 +1,33 @@
+{
+  "name": "pelo-pelo-mcz",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "1.0.5",
+    "@supabase/supabase-js": "^2.37.0",
+    "clsx": "^2.0.0",
+    "just-shuffle": "^4.2.0",
+    "next": "latest",
+    "ramda": "^0.29.1",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-hook-form": "^7.47.0",
+    "react-input-mask": "^2.0.4",
+    "react-use": "^17.4.0"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1",
+    "prettier": "3.0.3"
+  },
+  "lint-staged": {
+    "*.{js,css,html}": "prettier --write"
+  }
+}

@@ -1,0 +1,29 @@
+.container {
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.container img {
+  width: 180px;
+  margin: 0 auto;
+  margin-bottom: 22px;
+}
+
+.container h1 {
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.container .subheadline {
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 1.14rem;
+  margin-bottom: 4px;
+}
+
+.container p {
+  font-size: 0.75rem;
+  padding: 0;
+}

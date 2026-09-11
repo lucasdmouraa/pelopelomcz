@@ -1,0 +1,91 @@
+.content {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--md);
+}
+
+.voteButton {
+  padding: 0 45px;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  justify-content: center;
+}
+
+.options div {
+  align-items: center;
+  border: 2px dashed transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  max-width: 200px;
+}
+
+@media (max-width: 600px) {
+  .options div {
+    max-width: 150px;
+  }
+}
+
+.options div.selected {
+  border-radius: 20px;
+  border: 2px dashed var(--text-contrast);
+}
+
+.option img {
+  max-width: 100%;
+}
+
+.option img:nth-child(1) {
+  padding-top: 24px;
+  width: 48%;
+}
+
+.option img:nth-child(2) {
+  margin: 24px 0;
+  opacity: 0.8;
+  width: 80%;
+}
+
+.feedback {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 20% 70%;
+  justify-content: space-between;
+  padding: var(--xl) 0;
+}
+
+@media (max-width: 600px) {
+  .feedback {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+}
+
+.feedback img {
+  max-width: 200px;
+}
+
+.feedback form {
+  padding-top: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.feedback form input {
+  border-radius: 8px;
+  border: 0px;
+  padding: 24px 8px;
+  width: 100%;
+}
+
+.feedback form button {
+  margin-left: -160px;
+  font-size: 1rem;
+  font-weight: bold;
+}

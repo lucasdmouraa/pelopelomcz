@@ -1,0 +1,99 @@
+.content {
+  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: white;
+  border-radius: var(--sm);
+  box-shadow: 0px 4px 20px 0px #00000040;
+  left: 50%;
+  max-width: 370px;
+  padding: 30px 32px;
+  position: fixed;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+}
+
+.overlay {
+  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  position: fixed;
+}
+
+.title {
+  color: var(--secondary);
+  padding-top: 0;
+}
+
+.description {
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+  padding-top: 2px;
+  text-transform: uppercase;
+}
+
+.content form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: var(--sm);
+  text-transform: uppercase;
+}
+
+.content form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: var(--sm);
+  text-transform: uppercase;
+}
+
+form .labelContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+form .errorMessage {
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--error);
+}
+
+.submit {
+  font-size: 0.9rem;
+  margin-top: 20px;
+  text-transform: uppercase;
+}
+
+.close {
+  color: var(--secondary);
+  cursor: pointer;
+  height: 25px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 25px;
+}
+
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}

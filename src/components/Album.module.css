@@ -1,0 +1,62 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--xs);
+  border-radius: 12px;
+  background-color: var(--white);
+  padding: 16px;
+  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+}
+
+.thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.full {
+  border-radius: var(--xs);
+  box-shadow: 0px 2px 10px 0px #dedede;
+  display: none;
+  height: 370px;
+  margin: auto;
+  object-fit: cover;
+  width: 100%;
+  /* animation: fadeInFromNone 0.1s ease; */ /* not good on chrome */
+}
+
+.showcase {
+  display: block;
+}
+
+.thumb {
+  border-radius: var(--xs);
+  border: 2px solid rgba(242, 242, 242, 1);
+  box-shadow: 0px 2px 10px 0px #dedede;
+  cursor: pointer;
+  height: 50px;
+  object-fit: cover;
+  transition-duration: 0.1s;
+  width: 50px;
+}
+
+.active {
+  border: 2px solid var(--secondary);
+}
+
+@keyframes fadeInFromNone {
+  0% {
+    display: none;
+    opacity: 0;
+  }
+
+  1% {
+    display: block;
+    opacity: 0;
+  }
+
+  100% {
+    display: block;
+    opacity: 1;
+  }
+}

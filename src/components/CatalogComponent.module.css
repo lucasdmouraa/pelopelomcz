@@ -1,0 +1,36 @@
+.list {
+  display: grid;
+  gap: 54px 16px;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+  .list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pagination {
+  display: flex;
+  gap: 10px;
+  margin-top: 56px;
+}
+
+.pagination span {
+  align-items: center;
+  background-color: #d9d9d9;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.9rem;
+  height: 38px;
+  justify-content: center;
+  transition-duration: 0.05s;
+  transition-property: border;
+  width: 38px;
+}
+
+.pagination .activePage {
+  border: 2px solid var(--primary);
+}
