@@ -99,8 +99,12 @@ supabase/
 | Tabela | Para quê |
 |---|---|
 | `ong` | ONGs parceiras (nome, logo, links, `ativa`). Alimenta a seção Parceiros |
-| `perfil` | Liga um usuário do Supabase Auth a um papel: `admin` ou `ong` (com `ong_id`) |
-| `animal` | Pets. O `slug` (`mel-12`) é gerado pelo banco e vira a URL; `status` é `disponivel`, `em_processo` ou `adotado` — só `disponivel` aparece no site |
+| `perfil` | Liga um usuário do Supabase Auth a um papel: `admin` ou `ong` (com `ong_id` e `funcao`: `coordenacao` ou `voluntario`) |
+| `animal` | Pets. O `slug` (`mel-12`) é gerado pelo banco e vira a URL; `status` é `em_avaliacao` (recém-chegado), `disponivel`, `em_processo`, `adotado`, `morador` ou `falecido` — só `disponivel` aparece no site |
+| `animal_ficha` | Ficha interna: entrada, origem do resgate, microchip, óbito (nunca vai ao site) |
+| `evento_saude` | Prontuário: vacinas, vermífugos, consultas, exames, cirurgias, peso, com próxima data que vira lembrete |
+| `tratamento`, `dose` | Remédios com horários; as doses previstas são geradas pelo banco (`doses_previstas`) e só a dose dada vira linha, com quem deu e quando |
+| `documento` | Documentos privados no Supabase Storage (bucket `documentos`, pastas `equipe` e `restrito`) |
 | `foto` | `public_id` das fotos no Cloudinary e a `ordem` (a primeira é a capa) |
 | `adoption_request` | Pedidos do "Quero Adotar" e o andamento (`status`, `observacao`) controlado pela ONG |
 | `votes`, `newsletter` | Enquete de mascote e inscrições |
@@ -119,14 +123,22 @@ Como o site é estático, um pet cadastrado no painel só aparece depois de um n
 
 ### Painel (`/painel`)
 
-| Página | ONG | Admin |
-|---|---|---|
-| **Pets** (`/painel`) | Pets da própria ONG, por situação | Todos, com filtro por ONG, e "Publicar agora" |
-| **Pet** (`/painel/pet?id=`) | Cadastro, edição, situação e fotos (upload, ordem, capa) | Idem, escolhendo a ONG |
-| **Pedidos de adoção** | Pedidos dos seus pets: andamento, anotações e atalho para o WhatsApp | Todos |
-| **Minha ONG** / **ONGs e acessos** | Perfil e logo da ONG | Cadastra ONGs, ativa/desativa, convida e remove pessoas |
+Três perfis de acesso: **admin** (todas as ONGs), **coordenação** da ONG e **voluntário(a)**.
 
-Não existe cadastro público: o admin gera um **link de acesso** (vale 24 h, uso único) e envia por WhatsApp; a pessoa abre e cria a senha. O mesmo botão ("Novo link de acesso") serve de "esqueci minha senha". O token só é validado quando a pessoa envia o formulário, para que a prévia de link do WhatsApp não o consuma.
+| Página | Voluntário(a) | Coordenação | Admin |
+|---|---|---|---|
+| **Hoje** (`/painel/hoje`) | Doses do dia (Dei / Pulei, com quem deu) e vacinas vencendo | Idem + pedidos novos | Idem, de todas as ONGs |
+| **Pets** (`/painel`) | Pets da ONG por situação | Idem | Todos, com filtro por ONG, e "Publicar agora" |
+| **Pet** (`/painel/pet?id=`) | Dados, ficha, saúde, remédios, documentos da equipe e fotos; cadastra pets (nascem "recém-chegado") | Tudo, inclusive mudar a situação (publicar, adotado…), documentos restritos e excluir | Idem |
+| **Pedidos de adoção** | — | Pedidos dos seus pets: andamento, anotações, WhatsApp | Todos |
+| **Equipe** / **Minha ONG** | — | Convida e remove voluntários; perfil e logo da ONG | — |
+| **ONGs e acessos** | — | — | Cadastra ONGs, ativa/desativa, gerencia todos os acessos |
+
+Não existe cadastro público: o admin (ou a coordenação, para voluntários da própria ONG) gera um **link de acesso** (vale 24 h, uso único) e envia por WhatsApp; a pessoa abre e cria a senha. O mesmo botão ("Novo link de acesso") serve de "esqueci minha senha". O token só é validado quando a pessoa envia o formulário, para que a prévia de link do WhatsApp não o consuma.
+
+**No celular:** o painel é instalável como app. No Android (Chrome), menu **⋮ → Instalar app**; no iPhone (Safari), **Compartilhar → Adicionar à Tela de Início** (no iPhone o app pede login de novo). Ele abre direto na tela **Hoje**.
+
+**Testes:** `supabase/tests/rls.sql` testa todas as regras de acesso contra o projeto vinculado sem deixar rastro (tudo roda numa transação desfeita no fim): `supabase db query --linked -f supabase/tests/rls.sql` — o relatório vem na mensagem de erro final. `supabase/tests/e2e_equipe.sh` e `e2e_documentos.sh` testam as Edge Functions e o Storage de ponta a ponta, criando e apagando usuários, pets e arquivos de teste.
 
 ### Parceiros
 
