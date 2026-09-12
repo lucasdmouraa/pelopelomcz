@@ -12,6 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import c from "clsx";
 import { db } from "@/services/supabase";
 import { carregarPerfil, contarPedidosNovos } from "@/services/painel";
+import { FuncaoMap } from "@/utils";
 import styles from "./Painel.module.css";
 
 const PainelContext = createContext(null);
@@ -19,22 +20,40 @@ export const usePainel = () => useContext(PainelContext);
 
 const ROTAS_PUBLICAS = ["/painel/login", "/painel/definir-senha"];
 
-const menu = (perfil) => [
-  { href: "/painel", rotulo: "Pets", ativo: ["/painel", "/painel/pet"] },
-  {
-    href: "/painel/pedidos",
-    rotulo: "Pedidos de adoção",
-    ativo: ["/painel/pedidos"],
-    contador: true,
-  },
-  perfil.papel === "admin"
-    ? {
-        href: "/painel/ongs",
-        rotulo: "ONGs e acessos",
-        ativo: ["/painel/ongs", "/painel/ong"],
-      }
-    : { href: "/painel/ong", rotulo: "Minha ONG", ativo: ["/painel/ong"] },
-];
+const PETS = {
+  href: "/painel",
+  rotulo: "Pets",
+  ativo: ["/painel", "/painel/pet"],
+};
+const PEDIDOS = {
+  href: "/painel/pedidos",
+  rotulo: "Pedidos de adoção",
+  ativo: ["/painel/pedidos"],
+  contador: true,
+};
+const ONGS = {
+  href: "/painel/ongs",
+  rotulo: "ONGs e acessos",
+  ativo: ["/painel/ongs", "/painel/ong"],
+};
+const EQUIPE = {
+  href: "/painel/equipe",
+  rotulo: "Equipe",
+  ativo: ["/painel/equipe"],
+};
+const MINHA_ONG = {
+  href: "/painel/ong",
+  rotulo: "Minha ONG",
+  ativo: ["/painel/ong"],
+};
+
+// Voluntário não vê pedidos (CPF), equipe nem o perfil da ONG
+const menu = (perfil) => {
+  if (perfil.papel === "admin") return [PETS, PEDIDOS, ONGS];
+  if (perfil.funcao === "coordenacao")
+    return [PETS, PEDIDOS, EQUIPE, MINHA_ONG];
+  return [PETS];
+};
 
 export const PainelShell = ({ children }) => {
   const pathname = usePathname();
@@ -70,9 +89,13 @@ export const PainelShell = ({ children }) => {
     [userId],
   );
 
+  const isAdmin = perfil?.papel === "admin";
+  // admin ou coordenação da ONG: pedidos, equipe, perfil da ONG, situação dos pets
+  const isCoordenacao = isAdmin || perfil?.funcao === "coordenacao";
+
   const recarregarPedidos = useCallback(() => {
-    if (perfil) contarPedidosNovos().then(setPedidosNovos);
-  }, [perfil]);
+    if (isCoordenacao) contarPedidosNovos().then(setPedidosNovos);
+  }, [isCoordenacao]);
 
   useEffect(() => {
     recarregarPedidos();
@@ -92,7 +115,8 @@ export const PainelShell = ({ children }) => {
   const contexto = {
     session,
     perfil,
-    isAdmin: perfil?.papel === "admin",
+    isAdmin,
+    isCoordenacao,
     recarregarPerfil,
     recarregarPedidos,
     sair,
@@ -128,7 +152,11 @@ export const PainelShell = ({ children }) => {
             <img src="/1.webp" alt="" />
             <span>
               <strong>PeloPelo · Painel</strong>
-              <small>{perfil.ong?.nome ?? "Administrador"}</small>
+              <small>
+                {isAdmin
+                  ? "Administrador"
+                  : `${perfil.ong?.nome} · ${FuncaoMap[perfil.funcao]}`}
+              </small>
             </span>
           </Link>
           <nav className={styles.nav}>

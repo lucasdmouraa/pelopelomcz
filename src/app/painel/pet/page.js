@@ -7,6 +7,7 @@ import c from "clsx";
 import {
   Alert,
   ConfirmButton,
+  FichaEditor,
   FotosEditor,
   PetForm,
   usePainel,
@@ -15,6 +16,7 @@ import { apagarPet, buscarPet, listarOngs, salvarPet } from "@/services/painel";
 import { StatusAnimalMap } from "@/utils";
 import styles from "@/components/painel/Painel.module.css";
 
+// pet novo nasce "recém-chegado": só vai ao site quando a coordenação publicar
 const novoPet = (ongId) => ({
   ong_id: ongId ?? "",
   nome: "",
@@ -27,13 +29,13 @@ const novoPet = (ongId) => ({
   vermifugado: false,
   castrado: false,
   especial: false,
-  status: "disponivel",
+  status: "em_avaliacao",
 });
 
 const PetEditor = () => {
   const id = useSearchParams().get("id");
   const router = useRouter();
-  const { perfil, isAdmin } = usePainel();
+  const { perfil, isAdmin, isCoordenacao } = usePainel();
   const [pet, setPet] = useState(null);
   const [ongs, setOngs] = useState(null);
   const [erro, setErro] = useState(null);
@@ -69,7 +71,11 @@ const PetEditor = () => {
         setPet({ ...pet, ...salvo, descricao: salvo.descricao ?? "" });
         setAviso("Alterações salvas.");
       } else {
-        setAviso("Pet cadastrado! Agora adicione as fotos.");
+        setAviso(
+          isCoordenacao
+            ? "Pet cadastrado! Agora complete a ficha e adicione as fotos."
+            : "Pet cadastrado como recém-chegado. A coordenação decide quando publicar no site.",
+        );
         router.replace(`/painel/pet?id=${salvo.id}`);
       }
     } catch (e) {
@@ -126,9 +132,20 @@ const PetEditor = () => {
               key={pet.id ?? "novo"}
               pet={pet}
               ongs={isAdmin ? ongs : null}
+              podeMudarSituacao={isCoordenacao}
               onSubmit={salvar}
             />
           </section>
+
+          {pet.id && (
+            <section className={styles.card}>
+              <h2>Ficha</h2>
+              <FichaEditor
+                animalId={pet.id}
+                falecido={pet.status === "falecido"}
+              />
+            </section>
+          )}
 
           <section className={styles.card}>
             <h2>Fotos</h2>
@@ -141,13 +158,14 @@ const PetEditor = () => {
             )}
           </section>
 
-          {pet.id && (
+          {pet.id && isCoordenacao && (
             <section className={styles.card}>
               <h2>Excluir pet</h2>
               <p className={styles.muted}>
-                Se ele foi adotado, prefira mudar a situação para “Adotado”: ele
-                sai do site, mas o histórico e os pedidos de adoção continuam
-                guardados. Excluir apaga o pet, as fotos e os pedidos.
+                Se ele foi adotado ou faleceu, prefira mudar a situação: ele sai
+                do site, mas a ficha, o histórico e os pedidos de adoção
+                continuam guardados. Excluir apaga tudo: pet, ficha, fotos e
+                pedidos.
               </p>
               <div className={styles.actions} style={{ marginTop: 12 }}>
                 <ConfirmButton

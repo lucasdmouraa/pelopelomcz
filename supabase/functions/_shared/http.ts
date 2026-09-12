@@ -38,6 +38,7 @@ export type Perfil = {
   user_id: string;
   papel: "admin" | "ong";
   ong_id: number | null;
+  funcao: "coordenacao" | "voluntario" | null;
 };
 
 export const getPerfil = async (req: Request): Promise<Perfil | null> => {
@@ -49,14 +50,19 @@ export const getPerfil = async (req: Request): Promise<Perfil | null> => {
 
   const { data: perfil } = await admin
     .from("perfil")
-    .select("user_id, papel, ong_id")
+    .select("user_id, papel, ong_id, funcao")
     .eq("user_id", data.user.id)
     .maybeSingle();
   return perfil;
 };
 
+// Qualquer pessoa da equipe da ONG (rotina: fotos dos pets)
 export const podeGerirOng = (perfil: Perfil, ongId: number) =>
   perfil.papel === "admin" || perfil.ong_id === ongId;
+
+// Só a coordenação da ONG (apagar animal, logo, equipe)
+export const podeCoordenarOng = (perfil: Perfil, ongId: number) =>
+  perfil.papel === "admin" || (perfil.ong_id === ongId && perfil.funcao === "coordenacao");
 
 // Envolve o handler com CORS, parse do corpo e checagem de login.
 export const servir = (

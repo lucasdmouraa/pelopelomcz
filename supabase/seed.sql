@@ -13,4 +13,7 @@ from (values
 ) as v (ong, nome, especie, sexo, porte, idade, descricao, vacinado, vermifugado, castrado, especial)
 join public.ong o on o.slug = v.ong;
 
+-- sem status explícito o pet nasce "em_avaliacao"; publica os de exemplo
+update public.animal set status = 'disponivel';
 update public.animal set status = 'adotado' where nome = 'Cacau';
+update public.animal set status = 'morador' where nome = 'Sururu';

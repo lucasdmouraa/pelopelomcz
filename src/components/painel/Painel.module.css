@@ -307,6 +307,33 @@
   color: #666;
 }
 
+.em_avaliacao {
+  background-color: #f3e8ff;
+  color: #6b2fa3;
+}
+
+.morador {
+  background-color: #fde7d9;
+  color: #8a3b0c;
+}
+
+.falecido {
+  background-color: #e4e4e4;
+  color: #444;
+}
+
+/* funções na equipe */
+
+.coordenacao {
+  background-color: var(--secondary);
+  color: var(--white);
+}
+
+.voluntario {
+  background-color: #dcf3f1;
+  color: #1f6f6b;
+}
+
 /* formulários */
 
 .form {

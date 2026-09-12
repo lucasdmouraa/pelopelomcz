@@ -30,7 +30,7 @@ const linkWhatsapp = (pedido) => {
 };
 
 export default function PedidosPage() {
-  const { isAdmin, recarregarPedidos } = usePainel();
+  const { isAdmin, isCoordenacao, recarregarPedidos } = usePainel();
   const [pedidos, setPedidos] = useState(null);
   const [filtro, setFiltro] = useState("abertos");
   const [erro, setErro] = useState(null);
@@ -62,6 +62,11 @@ export default function PedidosPage() {
   };
 
   const visiveis = pedidos?.filter((p) => noFiltro(p, filtro)) ?? [];
+
+  // pedidos têm CPF: só a coordenação (a RLS também só devolve para ela)
+  if (!isCoordenacao) {
+    return <Alert tipo="error">Página da coordenação da ONG.</Alert>;
+  }
 
   return (
     <>

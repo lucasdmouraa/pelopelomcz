@@ -4,7 +4,7 @@
 //   { acao: "apagar_foto", foto_id }     → remove do Cloudinary e da tabela foto
 //   { acao: "apagar_animal", animal_id } → remove todas as fotos e o animal
 
-import { admin, erro, json, podeGerirOng, servir } from "../_shared/http.ts";
+import { admin, erro, json, podeCoordenarOng, podeGerirOng, servir } from "../_shared/http.ts";
 
 const CLOUD_NAME = Deno.env.get("CLOUDINARY_CLOUD_NAME")!;
 const API_KEY = Deno.env.get("CLOUDINARY_API_KEY")!;
@@ -66,7 +66,7 @@ servir(async (perfil, body) => {
 
     case "assinar_logo": {
       const ongId = Number(body.ong_id);
-      if (!podeGerirOng(perfil, ongId)) return erro("Sem permissão para esta ONG", 403);
+      if (!podeCoordenarOng(perfil, ongId)) return erro("Só a coordenação da ONG troca a logo", 403);
       const pasta = `ongs/${ongId}`;
       const assinado = await assinar({
         asset_folder: pasta,
@@ -95,9 +95,10 @@ servir(async (perfil, body) => {
     }
 
     case "apagar_animal": {
+      // a service role ignora a RLS: a regra "só coordenação apaga" vale aqui também
       const animal = await buscarAnimal(body.animal_id);
-      if (!animal || !podeGerirOng(perfil, animal.ong_id)) {
-        return erro("Sem permissão para este animal", 403);
+      if (!animal || !podeCoordenarOng(perfil, animal.ong_id)) {
+        return erro("Só a coordenação da ONG pode excluir pets", 403);
       }
 
       const { data: fotos } = await admin.from("foto").select("public_id").eq("animal_id", animal.id);

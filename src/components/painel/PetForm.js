@@ -13,7 +13,9 @@ const SAUDE = [
   ["especial", "Necessidades especiais"],
 ];
 
-export const PetForm = ({ pet, ongs, onSubmit }) => {
+// A situação (publicar, adotado, morador…) é decisão da coordenação; para o
+// voluntário o select nem aparece e o banco recusa a mudança.
+export const PetForm = ({ pet, ongs, podeMudarSituacao, onSubmit }) => {
   const {
     register,
     handleSubmit,
@@ -88,15 +90,17 @@ export const PetForm = ({ pet, ongs, onSubmit }) => {
         >
           <input {...register("idade", { required: true })} />
         </Field>
-        <Field label="Situação">
-          <select className={styles.select} {...register("status")}>
-            {Object.entries(StatusAnimalMap).map(([valor, rotulo]) => (
-              <option key={valor} value={valor}>
-                {rotulo}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {podeMudarSituacao && (
+          <Field label="Situação" hint="Só “Disponível” aparece no site.">
+            <select className={styles.select} {...register("status")}>
+              {Object.entries(StatusAnimalMap).map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
       </div>
 
       <fieldset className={styles.fieldset}>

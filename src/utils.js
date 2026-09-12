@@ -30,10 +30,18 @@ export const SizeMap = {
   grande: "Grande Porte",
   gigante: "Gigantão",
 };
+// A ordem define o select de situação no painel. Só "disponivel" vai ao site.
 export const StatusAnimalMap = {
+  em_avaliacao: "Recém-chegado",
   disponivel: "Disponível",
   em_processo: "Em processo de adoção",
   adotado: "Adotado",
+  morador: "Morador do abrigo",
+  falecido: "Falecido",
+};
+export const FuncaoMap = {
+  coordenacao: "Coordenação",
+  voluntario: "Voluntário(a)",
 };
 export const StatusPedidoMap = {
   novo: "Novo",

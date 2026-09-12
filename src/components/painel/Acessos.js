@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import c from "clsx";
-import { convidar, removerAcesso } from "@/services/painel";
+import { convidar, definirFuncao, removerAcesso } from "@/services/painel";
+import { FuncaoMap } from "@/utils";
 import { usePainel } from "./PainelShell";
 import { Alert, ConfirmButton, Field } from "./ui";
 import styles from "./Painel.module.css";
@@ -58,12 +59,12 @@ const LinkGerado = ({ url, nome, ong, onClose }) => {
   );
 };
 
-const ConviteForm = ({ onSubmit, onCancel }) => {
+const ConviteForm = ({ comFuncao, funcaoPadrao, onSubmit, onCancel }) => {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({ defaultValues: { funcao: funcaoPadrao } });
 
   return (
     <form
@@ -77,6 +78,14 @@ const ConviteForm = ({ onSubmit, onCancel }) => {
         <Field label="Nome (opcional)">
           <input {...register("nome")} />
         </Field>
+        {comFuncao && (
+          <Field label="Função">
+            <select className={styles.select} {...register("funcao")}>
+              <option value="voluntario">{FuncaoMap.voluntario}</option>
+              <option value="coordenacao">{FuncaoMap.coordenacao}</option>
+            </select>
+          </Field>
+        )}
       </div>
       <div className={styles.actions}>
         <button
@@ -99,39 +108,40 @@ const ConviteForm = ({ onSubmit, onCancel }) => {
 };
 
 // Lista quem acessa o painel por uma ONG (ou como admin) e permite convidar,
-// gerar novo link (serve de "esqueci a senha") e remover acesso.
+// gerar novo link (serve de "esqueci a senha"), mudar a função e remover.
+// A coordenação só gere voluntários da própria ONG (a Edge Function confere).
 export const Acessos = ({ perfis, papel, ong, onChange }) => {
-  const { perfil: eu } = usePainel();
+  const { perfil: eu, isAdmin } = usePainel();
   const [link, setLink] = useState(null);
   const [formAberto, setFormAberto] = useState(false);
   const [erro, setErro] = useState(null);
 
-  const gerarLink = async ({ email, nome }) => {
+  const comFuncao = papel === "ong";
+  const podeGerir = (perfil) => isAdmin || perfil.funcao === "voluntario";
+
+  const agir = async (acao) => {
     setErro(null);
     try {
+      await acao();
+      onChange();
+    } catch (e) {
+      setErro(e.message);
+    }
+  };
+
+  // sem "funcao", o convidar mantém a função atual de quem já tem acesso
+  const gerarLink = ({ email, nome, funcao }) =>
+    agir(async () => {
       const { link: url } = await convidar({
         email,
         nome,
         papel,
         ongId: ong?.id,
+        funcao: comFuncao ? funcao : undefined,
       });
       setLink({ url, nome });
       setFormAberto(false);
-      onChange();
-    } catch (e) {
-      setErro(e.message);
-    }
-  };
-
-  const remover = async (perfil) => {
-    setErro(null);
-    try {
-      await removerAcesso(perfil.user_id);
-      onChange();
-    } catch (e) {
-      setErro(e.message);
-    }
-  };
+    });
 
   return (
     <>
@@ -142,24 +152,58 @@ export const Acessos = ({ perfis, papel, ong, onChange }) => {
         {perfis.map((perfil) => (
           <div className={styles.userRow} key={perfil.user_id}>
             <span>
-              <strong>{perfil.nome || perfil.email}</strong>
+              <strong>{perfil.nome || perfil.email}</strong>{" "}
+              {comFuncao && (
+                <span className={c(styles.badge, styles[perfil.funcao])}>
+                  {FuncaoMap[perfil.funcao]}
+                </span>
+              )}
               {perfil.nome && (
                 <small className={styles.muted}>{perfil.email}</small>
               )}
             </span>
             <div className={styles.actions}>
-              <button
-                type="button"
-                className={c(styles.btn, styles.btnGhost, styles.btnSmall)}
-                onClick={() => gerarLink(perfil)}
-              >
-                Novo link de acesso
-              </button>
-              {perfil.user_id !== eu.user_id && (
+              {podeGerir(perfil) && (
+                <button
+                  type="button"
+                  className={c(styles.btn, styles.btnGhost, styles.btnSmall)}
+                  onClick={() =>
+                    gerarLink({ email: perfil.email, nome: perfil.nome })
+                  }
+                >
+                  Novo link de acesso
+                </button>
+              )}
+              {comFuncao && perfil.funcao === "voluntario" && (
+                <ConfirmButton
+                  className={c(styles.btn, styles.btnGhost, styles.btnSmall)}
+                  confirmText="Confirmar: tornar coordenação"
+                  onConfirm={() =>
+                    agir(() => definirFuncao(perfil.user_id, "coordenacao"))
+                  }
+                >
+                  Tornar coordenação
+                </ConfirmButton>
+              )}
+              {comFuncao &&
+                isAdmin &&
+                perfil.funcao === "coordenacao" &&
+                perfil.user_id !== eu.user_id && (
+                  <ConfirmButton
+                    className={c(styles.btn, styles.btnGhost, styles.btnSmall)}
+                    confirmText="Confirmar: tornar voluntário(a)"
+                    onConfirm={() =>
+                      agir(() => definirFuncao(perfil.user_id, "voluntario"))
+                    }
+                  >
+                    Tornar voluntário(a)
+                  </ConfirmButton>
+                )}
+              {perfil.user_id !== eu.user_id && podeGerir(perfil) && (
                 <ConfirmButton
                   className={c(styles.btn, styles.btnGhost, styles.btnSmall)}
                   confirmText="Confirmar remoção"
-                  onConfirm={() => remover(perfil)}
+                  onConfirm={() => agir(() => removerAcesso(perfil.user_id))}
                 >
                   Remover
                 </ConfirmButton>
@@ -174,6 +218,8 @@ export const Acessos = ({ perfis, papel, ong, onChange }) => {
 
       {formAberto ? (
         <ConviteForm
+          comFuncao={comFuncao}
+          funcaoPadrao={isAdmin ? "coordenacao" : "voluntario"}
           onSubmit={gerarLink}
           onCancel={() => setFormAberto(false)}
         />

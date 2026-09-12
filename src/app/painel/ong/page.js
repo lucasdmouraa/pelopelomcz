@@ -140,7 +140,7 @@ const Logo = ({ ong, onChange }) => {
 const OngEditor = () => {
   const id = useSearchParams().get("id");
   const router = useRouter();
-  const { perfil, isAdmin, recarregarPerfil } = usePainel();
+  const { perfil, isAdmin, isCoordenacao, recarregarPerfil } = usePainel();
   // ONG sempre edita a própria; só o admin escolhe (ou cria) pelo ?id=
   const ongId = isAdmin ? (id ? Number(id) : null) : perfil.ong_id;
   const [ong, setOng] = useState(null);
@@ -183,6 +183,10 @@ const OngEditor = () => {
       setErro(e.message);
     }
   };
+
+  if (!isCoordenacao) {
+    return <Alert tipo="error">Página da coordenação da ONG.</Alert>;
+  }
 
   return (
     <>

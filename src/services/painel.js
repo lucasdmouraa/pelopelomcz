@@ -124,6 +124,36 @@ export const salvarPet = ({ id, ...pet }) => {
 export const apagarPet = (animalId) =>
   invocar("cloudinary", { acao: "apagar_animal", animal_id: animalId });
 
+// Ficha interna (1:1). A ONG e a autoria são preenchidas pelo banco.
+const CAMPOS_FICHA = [
+  "data_entrada",
+  "nascimento_aproximado",
+  "microchip",
+  "origem_resgate",
+  "condicao_chegada",
+  "observacoes",
+  "data_obito",
+  "causa_obito",
+];
+
+export const buscarFicha = (animalId) =>
+  executar(
+    db.from("animal_ficha").select("*").eq("animal_id", animalId).maybeSingle(),
+  );
+
+export const salvarFicha = (animalId, ficha) => {
+  const dados = Object.fromEntries(
+    CAMPOS_FICHA.map((campo) => [campo, ficha[campo]?.trim() || null]),
+  );
+  return executar(
+    db
+      .from("animal_ficha")
+      .upsert({ animal_id: animalId, ...dados })
+      .select()
+      .single(),
+  );
+};
+
 // Fotos (upload direto do browser para o Cloudinary, assinado pela Edge Function)
 
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // limite do plano gratuito do Cloudinary
@@ -245,15 +275,25 @@ export const enviarLogo = async (ongId, arquivo) => {
 export const listarPerfis = () =>
   executar(db.from("perfil").select("*").order("created_at"));
 
-export const convidar = ({ email, nome, papel, ongId }) =>
+export const listarEquipe = (ongId) =>
+  executar(
+    db.from("perfil").select("*").eq("ong_id", ongId).order("created_at"),
+  );
+
+// Sem `funcao`, quem já tem acesso mantém a função atual.
+export const convidar = ({ email, nome, papel, ongId, funcao }) =>
   invocar("convidar", {
     acao: "convidar",
     email,
     nome,
     papel,
     ong_id: ongId,
+    funcao,
     redirect_to: `${window.location.origin}/painel/definir-senha`,
   });
+
+export const definirFuncao = (userId, funcao) =>
+  invocar("convidar", { acao: "definir_funcao", user_id: userId, funcao });
 
 export const removerAcesso = (userId) =>
   invocar("convidar", { acao: "remover", user_id: userId });

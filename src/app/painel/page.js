@@ -9,14 +9,25 @@ import { imageUrl } from "@/services/cloudinary";
 import { SizeMap, StatusAnimalMap } from "@/utils";
 import styles from "@/components/painel/Painel.module.css";
 
+// quem está sob os cuidados da ONG agora
+const NO_ABRIGO = ["em_avaliacao", "disponivel", "em_processo", "morador"];
+
 const FILTROS = [
+  ["abrigo", "No abrigo"],
+  ["em_avaliacao", "Recém-chegados"],
   ["disponivel", "Disponíveis"],
   ["em_processo", "Em processo"],
+  ["morador", "Moradores"],
   ["adotado", "Adotados"],
+  ["falecido", "Falecidos"],
   ["todos", "Todos"],
 ];
 
-const noFiltro = (pet, filtro) => filtro === "todos" || pet.status === filtro;
+const noFiltro = (pet, filtro) =>
+  filtro === "todos" ||
+  (filtro === "abrigo"
+    ? NO_ABRIGO.includes(pet.status)
+    : pet.status === filtro);
 
 const capa = (pet) =>
   [...pet.foto].sort((a, b) => a.ordem - b.ordem)[0]?.public_id;
@@ -25,7 +36,7 @@ export default function PetsPage() {
   const { perfil, isAdmin } = usePainel();
   const [pets, setPets] = useState(null);
   const [erro, setErro] = useState(null);
-  const [filtro, setFiltro] = useState("disponivel");
+  const [filtro, setFiltro] = useState("abrigo");
   const [ongs, setOngs] = useState([]);
   const [ongId, setOngId] = useState("");
 
