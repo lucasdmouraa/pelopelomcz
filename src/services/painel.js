@@ -154,6 +154,50 @@ export const salvarFicha = (animalId, ficha) => {
   );
 };
 
+// Prontuário (eventos de saúde). ONG e autor preenchidos pelo banco; um novo
+// evento do mesmo tipo resolve o lembrete anterior (trigger).
+const CAMPOS_EVENTO = [
+  "tipo",
+  "data",
+  "produto",
+  "descricao",
+  "peso_kg",
+  "proxima_data",
+  "valor",
+];
+
+export const listarEventos = (animalId) =>
+  executar(
+    db
+      .from("evento_saude")
+      .select("*")
+      .eq("animal_id", animalId)
+      .order("data", { ascending: false })
+      .order("id", { ascending: false }),
+  );
+
+export const registrarEvento = (animalId, evento) => {
+  const dados = Object.fromEntries(
+    CAMPOS_EVENTO.map((campo) => [
+      campo,
+      typeof evento[campo] === "string"
+        ? evento[campo].trim() || null
+        : evento[campo] ?? null,
+    ]),
+  );
+  return executar(
+    db.from("evento_saude").insert({ animal_id: animalId, ...dados }),
+  );
+};
+
+export const apagarEvento = (id) =>
+  executar(db.from("evento_saude").delete().eq("id", id));
+
+export const listarVencimentos = (dias = 7) => {
+  const ate = new Date(Date.now() + dias * 864e5).toISOString().slice(0, 10);
+  return executar(db.rpc("vencimentos", { ate }));
+};
+
 // Fotos (upload direto do browser para o Cloudinary, assinado pela Edge Function)
 
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // limite do plano gratuito do Cloudinary

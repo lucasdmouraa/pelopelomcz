@@ -715,6 +715,50 @@
   padding: 8px 10px;
 }
 
+/* linha do tempo de saúde */
+
+.vencido {
+  background-color: #ffe8e6;
+  color: #a1261d;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.timelineItem {
+  border-left: 3px solid var(--primary);
+  background-color: var(--base);
+  border-radius: 0 10px 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+}
+
+.timelineItem p {
+  font-size: 0.9rem;
+  white-space: pre-line;
+}
+
+.timelineHeader,
+.timelineFooter {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  justify-content: space-between;
+}
+
+.timelineFooter {
+  justify-content: flex-start;
+}
+
 .inlineForm {
   background-color: var(--base);
   border-radius: 10px;

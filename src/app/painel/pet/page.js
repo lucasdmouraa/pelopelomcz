@@ -10,6 +10,7 @@ import {
   FichaEditor,
   FotosEditor,
   PetForm,
+  SaudeEditor,
   usePainel,
 } from "@/components/painel";
 import { apagarPet, buscarPet, listarOngs, salvarPet } from "@/services/painel";
@@ -144,6 +145,13 @@ const PetEditor = () => {
                 animalId={pet.id}
                 falecido={pet.status === "falecido"}
               />
+            </section>
+          )}
+
+          {pet.id && (
+            <section className={styles.card}>
+              <h2>Saúde</h2>
+              <SaudeEditor animalId={pet.id} />
             </section>
           )}
 

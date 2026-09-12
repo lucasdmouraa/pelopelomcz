@@ -43,6 +43,17 @@ export const FuncaoMap = {
   coordenacao: "Coordenação",
   voluntario: "Voluntário(a)",
 };
+export const TipoEventoMap = {
+  vacina: "Vacina",
+  vermifugo: "Vermífugo",
+  antipulgas: "Antipulgas/carrapatos",
+  consulta: "Consulta",
+  exame: "Exame",
+  cirurgia: "Cirurgia",
+  castracao: "Castração",
+  peso: "Peso",
+  outro: "Outro",
+};
 export const StatusPedidoMap = {
   novo: "Novo",
   em_contato: "Em contato",
