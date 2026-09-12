@@ -10,6 +10,17 @@
   height: 96px;
 }
 
+.name {
+  align-items: center;
+  border: 2px solid var(--secondary);
+  border-radius: var(--xs);
+  color: var(--secondary);
+  display: flex;
+  font-weight: bold;
+  height: 96px;
+  padding: 0 var(--sm);
+}
+
 @media (max-width: 600px) {
   .images {
     align-items: center;

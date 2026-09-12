@@ -13,6 +13,10 @@ const PAGE_SIZE = 8;
 export const CatalogComponent = ({ pets }) => {
   const [activePageIndex, setActivePageIndex] = useState(1);
 
+  if (!pets.length) {
+    return <p>Nenhum pet disponível no momento. Volte em breve!</p>;
+  }
+
   const pages = Math.ceil(pets.length / PAGE_SIZE);
   const groupedPets = splitEvery(PAGE_SIZE, pets);
   const activePage = groupedPets[activePageIndex - 1];

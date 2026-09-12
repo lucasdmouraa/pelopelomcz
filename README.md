@@ -74,35 +74,69 @@ A missão do projeto é criar impacto significativo na vida dos animais por meio
 
 ## Arquitetura
 
-A aplicação é **totalmente estática** (`output: "export"` no Next.js). Não há servidor em runtime — os dados dos pets são buscados em **build time** via Server Components assíncronos e `generateStaticParams`.
+O **site público** é **totalmente estático** (`output: "export"` no Next.js): os dados dos pets são buscados em **build time** via Server Components assíncronos e `generateStaticParams`. O **painel** (`/painel`) também é exportado como páginas estáticas, mas roda todo no browser, falando direto com o Supabase com a sessão de quem está logado.
 
 ```
 src/
-├── app/              # Rotas (/, /adote/[pet])
-├── sections/         # Server Components — seções de página
+├── app/
+│   ├── adote/[pet]/  # Página do pet (/adote/mel-12)
+│   └── painel/       # Painel das ONGs e do admin (client-side)
+├── sections/         # Server Components — seções do site
 ├── components/       # Client Components — UI interativa
-├── services/         # Supabase e Cloudinary
+│   └── painel/       # Componentes e estilos do painel
+├── services/         # supabase.js (site), painel.js (painel), cloudinary.js (URLs)
 ├── hooks/            # Estado client-side (enquete, newsletter, temas)
 ├── icons/            # Ícones SVG customizados
 └── global.css        # Variáveis de tema e classes utilitárias
+supabase/
+├── migrations/       # Schema, RLS, triggers e publicação automática
+├── functions/        # Edge Functions: cloudinary (upload assinado) e convidar (acessos)
+└── seed.sql          # Pets de exemplo (só no ambiente local)
 ```
 
 ### Camada de dados
 
-- **Supabase** — tabelas `animal`, `adoption_request`, `votes` e `newsletter`
-- **Cloudinary** — imagens organizadas por pasta com o `id` do pet; transformações `thumb`, `mini` e `full` aplicadas via URL
+| Tabela | Para quê |
+|---|---|
+| `ong` | ONGs parceiras (nome, logo, links, `ativa`). Alimenta a seção Parceiros |
+| `perfil` | Liga um usuário do Supabase Auth a um papel: `admin` ou `ong` (com `ong_id`) |
+| `animal` | Pets. O `slug` (`mel-12`) é gerado pelo banco e vira a URL; `status` é `disponivel`, `em_processo` ou `adotado` — só `disponivel` aparece no site |
+| `foto` | `public_id` das fotos no Cloudinary e a `ordem` (a primeira é a capa) |
+| `adoption_request` | Pedidos do "Quero Adotar" e o andamento (`status`, `observacao`) controlado pela ONG |
+| `votes`, `newsletter` | Enquete de mascote e inscrições |
+| `site_estado` | Controla quando o site precisa ser reconstruído |
 
-`getAnimals()` une os dois serviços: busca pets no Supabase, associa imagens do Cloudinary pelo `id` e embaralha o resultado.
+A segurança está toda nas **políticas RLS** (`supabase/migrations/`): o visitante só lê pets disponíveis de ONGs ativas; cada ONG lê e altera apenas os próprios pets, fotos e pedidos (os pedidos têm CPF — LGPD); o admin vê tudo. O que precisa de segredo roda nas **Edge Functions**:
+
+- `cloudinary` — assina o upload direto do browser para a pasta do pet (`pets/<id>/`) ou para a logo da ONG, e apaga fotos.
+- `convidar` — cria acessos e gera o link para a pessoa definir a senha (não depende de e-mail).
+
+As imagens são servidas pelo Cloudinary com as transformações na própria URL (`imageUrl(public_id, 'thumb'|'mini'|'full')` em `src/services/cloudinary.js`), sem nada para configurar na conta.
+
+### Publicação automática
+
+Como o site é estático, um pet cadastrado no painel só aparece depois de um novo build. Toda alteração em `animal`, `foto` ou `ong` marca `site_estado.alterado_em`; um job do `pg_cron` roda a cada 5 minutos e, se houve mudança (e nenhuma nos últimos 3 minutos, para agrupar uma sessão de edição num build só), chama o **deploy hook** do Cloudflare Pages — no máximo um build a cada 10 minutos. O admin também tem o botão "Publicar agora" no painel.
+
+### Painel (`/painel`)
+
+| Página | ONG | Admin |
+|---|---|---|
+| **Pets** (`/painel`) | Pets da própria ONG, por situação | Todos, com filtro por ONG, e "Publicar agora" |
+| **Pet** (`/painel/pet?id=`) | Cadastro, edição, situação e fotos (upload, ordem, capa) | Idem, escolhendo a ONG |
+| **Pedidos de adoção** | Pedidos dos seus pets: andamento, anotações e atalho para o WhatsApp | Todos |
+| **Minha ONG** / **ONGs e acessos** | Perfil e logo da ONG | Cadastra ONGs, ativa/desativa, convida e remove pessoas |
+
+Não existe cadastro público: o admin gera um **link de acesso** (vale 24 h, uso único) e envia por WhatsApp; a pessoa abre e cria a senha. O mesmo botão ("Novo link de acesso") serve de "esqueci minha senha". O token só é validado quando a pessoa envia o formulário, para que a prévia de link do WhatsApp não o consuma.
 
 ### Parceiros
 
-| ONG | Slug (coluna `ong`) | Links |
+As ONGs são cadastradas pelo admin no painel (**ONGs e acessos → Nova ONG**). As três iniciais já vêm na migration, com as logos em `public/`:
+
+| ONG | Slug | Links |
 |---|---|---|
 | Grupo Pata Amada | `pata-amada` | [Instagram](https://www.instagram.com/grupopataamada/) · [X](https://x.com/grupopataamada) |
 | SOS Pet Pinheiro | `sos-pet-pinheiro` | [Instagram](https://www.instagram.com/sospetpinheiro/) · [Atados](https://www.atados.com.br/ong/sos-pet-pinheiro-323931) |
 | Projeto Acolher Maceió | `projeto-acolher` | [Instagram](https://www.instagram.com/projetoacolher/) · [Adotar](https://adotar.com.br/instituicao/projeto-acolher) |
-
-O slug é o valor que deve ir na coluna `ong` da tabela `animal`; o nome exibido vem do `OngsMap` em `src/utils.js`. Para adicionar uma ONG: incluir a logo em `public/`, o item em `src/sections/Partners.js` e o slug em `src/utils.js`.
 
 ---
 
@@ -110,24 +144,26 @@ O slug é o valor que deve ir na coluna `ong` da tabela `animal`; o nome exibido
 
 ### Pré-requisitos
 
-- Node.js
-- Um projeto Supabase e uma conta Cloudinary próprios (ver [Configurando o backend](#configurando-o-backend))
+- Node.js 20+
+- [Docker](https://www.docker.com/) e [Supabase CLI](https://supabase.com/docs/guides/cli), para subir o banco local já com o schema e pets de exemplo
 
 ### Instalação
 
 ```bash
 npm install
-cp .env.local.example .env.local   # e preencha as 4 variáveis
+supabase start                      # Postgres, Auth e Edge Functions locais + migrations + seed
+cp .env.local.example .env.local    # preencha com a URL e a chave mostradas pelo `supabase start`
 ```
 
 | Variável | Onde obter |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public key |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary → Dashboard → Cloud name |
-| `CLOUDINARY_AUTH` | base64 de `api_key:api_secret` (`echo -n "key:secret" \| base64`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Local: `http://127.0.0.1:54321`. Produção: Supabase → Project Settings → API → Project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Local: chave pública do `supabase status`. Produção: Supabase → Project Settings → API Keys → *Publishable key* (`sb_publishable_…`) |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cloudinary → Dashboard → Cloud name |
 
-As duas primeiras usam o prefixo `NEXT_PUBLIC_` porque o formulário de adoção, a enquete e a newsletter gravam direto do browser. A chave anon é pública por design; a segurança fica nas políticas RLS do Supabase.
+As três são públicas por design (vão para o browser); a segurança fica nas políticas RLS e nas Edge Functions.
+
+Para usar o painel localmente, crie um admin como em [Primeiro administrador](#primeiro-administrador), pelo Studio local (http://127.0.0.1:54323). O upload de fotos local precisa de credenciais reais do Cloudinary em `supabase/functions/.env` (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`; arquivo fora do git).
 
 ### Comandos
 
@@ -139,26 +175,56 @@ npm run lint   # ESLint via Next.js
 
 ---
 
-## Configurando o backend
+## Configurando o backend (produção)
 
-### Supabase
+### 1. Cloudinary
 
-Crie as tabelas abaixo (nomes e colunas são os que o código usa):
+Crie a conta e anote, em **Settings → API Keys**, o `Cloud name`, a `API Key` e o `API Secret`. Não é preciso criar pastas nem transformações: as pastas (`pets/<id>/`, `ongs/<id>/`) nascem no upload e as transformações vão na URL. O `API Secret` fica **só** nas Edge Functions, nunca no site.
 
-| Tabela | Colunas | Observações |
-|---|---|---|
-| `animal` | `id` (int, PK), `created_at` (timestamptz), `nome` (text, único), `especie` (`gato` ou `cachorro`), `sexo` (`macho` ou `femea`), `porte` (`pequeno`, `medio`, `grande`, `gigante`), `idade` (text), `ong` (slug da tabela de parceiros), `vacinado`, `vermifugado`, `castrado`, `especial` (bool) | `nome` é usado na URL `/adote/[nome]` |
-| `adoption_request` | `id`, `created_at`, `name` (text), `contact` (text), `cpf` (text), `pet_id` (int → `animal.id`) | preenchida pelo formulário "Quero Adotar" |
-| `votes` | `id`, `created_at`, `option` (int 1–5) | enquete de mascote |
-| `newsletter` | `id`, `created_at`, `email` (text) | inscrição após votar |
+### 2. Supabase
 
-Políticas RLS para a role `anon`: `SELECT` em `animal`; `INSERT` em `adoption_request`, `votes` e `newsletter`.
+1. Crie o projeto (região São Paulo, `sa-east-1`) e, no terminal:
 
-### Cloudinary
+   ```bash
+   supabase login
+   supabase link --project-ref <ref-do-projeto>
+   supabase db push      # aplica supabase/migrations (schema, RLS, cron, ONGs iniciais)
+   supabase secrets set CLOUDINARY_CLOUD_NAME=... CLOUDINARY_API_KEY=... CLOUDINARY_API_SECRET=...
+   supabase functions deploy cloudinary --no-verify-jwt
+   supabase functions deploy convidar --no-verify-jwt
+   ```
 
-- Cada pet tem uma **pasta nomeada com o seu `id`** da tabela `animal` (ex.: `12/foto1.jpg`). A primeira imagem encontrada vira a capa no catálogo; todas aparecem no álbum do perfil.
-- Crie as **named transformations** `t_media_lib_thumb`, `t_mini` e `t_full` (Settings → Transformations), usadas por `applyTransformation` em `src/services/cloudinary.js`.
-- Pets sem pasta no Cloudinary aparecem sem imagem, mas não quebram o build.
+   `--no-verify-jwt` porque as funções validam o token do usuário internamente (`supabase/functions/_shared/http.ts`).
+
+2. **Authentication → Sign In / Providers**: desligue **Allow new users to sign up** (o acesso é só por convite). No provedor **Email**, mude **Email OTP Expiration** para `86400` (24 h, a validade do link de acesso).
+3. **Authentication → URL Configuration**: `Site URL` = endereço do site em produção.
+
+> O plano gratuito do Supabase pausa o projeto depois de 7 dias sem uso. Com o site estático, só o painel e o formulário de adoção acessam o banco; se as ONGs ficarem uma semana sem entrar, o projeto precisa ser reativado no dashboard.
+
+#### Primeiro administrador
+
+Em **Authentication → Users → Add user → Create new user**, crie seu usuário com e-mail e senha (marque *Auto Confirm User*). Depois, no **SQL Editor**:
+
+```sql
+insert into public.perfil (user_id, papel, nome, email)
+select id, 'admin', 'Seu nome', email from auth.users where email = 'voce@exemplo.com';
+```
+
+Os próximos acessos (de ONGs ou de outros admins) são criados pelo próprio painel.
+
+### 3. Cloudflare Pages
+
+1. **Workers & Pages → Create → Pages → Connect to Git** e escolha o repositório.
+2. Build: preset **Next.js (Static HTML Export)**, comando `npm run build`, pasta de saída `out`.
+3. **Environment variables**: as três `NEXT_PUBLIC_*` de produção e `NODE_VERSION` = `22`.
+4. **Settings → Builds → Deploy hooks**: crie um hook para a branch `main` e guarde a URL no Vault do Supabase, pelo **SQL Editor**:
+
+   ```sql
+   select vault.create_secret('https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/...', 'deploy_hook_url');
+   ```
+
+   A partir daí, as alterações feitas no painel entram no ar sozinhas. O plano gratuito do Cloudflare Pages permite 500 builds por mês; a publicação automática faz no máximo 6 por hora, e só quando há alteração.
+5. Configure o domínio em **Custom domains** e atualize o `Site URL` do Supabase.
 
 ---
 

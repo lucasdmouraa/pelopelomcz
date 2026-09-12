@@ -1,23 +1,42 @@
-import { getAnimals, getPetByName } from "@/services/supabase";
+import { notFound } from "next/navigation";
+import { getAnimals, getPetBySlug } from "@/services/supabase";
+import { imageUrl } from "@/services/cloudinary";
 import { PetProfile, SimilarPets, Partners, Footer } from "@/sections";
 
-// needed because the pet name from url is lowercased
-// and all from database is capitalized
-const capitalize = (str) => str[0].toUpperCase() + str.substring(1);
+// O Next 13 recusa exportar uma rota dinâmica sem nenhum parâmetro. Sem pets
+// publicados, gera só este placeholder, que responde 404.
+const SEM_PETS = "_";
 
+// O slug ("mel-12") é gerado pelo banco e não muda, mesmo se o pet for renomeado.
 export const generateStaticParams = async () => {
   const pets = await getAnimals();
-  return pets.map((pet) => ({ pet: pet.nome.toLowerCase() }));
+  if (!pets.length) return [{ pet: SEM_PETS }];
+  return pets.map((pet) => ({ pet: pet.slug }));
 };
 
-const AdoptPage = async ({ params: { pet: petName } }) => {
-  const capitalizedName = capitalize(petName);
-  const _pet = await getPetByName(capitalizedName);
+// Prévia do link ao compartilhar no WhatsApp/Instagram
+export const generateMetadata = async ({ params: { pet: slug } }) => {
+  if (slug === SEM_PETS) return {};
+
+  const pet = await getPetBySlug(slug);
+  return {
+    title: `Adote ${pet.nome} · PeloPelo`,
+    description: `${pet.nome} está esperando por um lar em Maceió. Conheça no PeloPelo!`,
+    openGraph: pet.image
+      ? { images: [imageUrl(pet.image, "mini")] }
+      : undefined,
+  };
+};
+
+const AdoptPage = async ({ params: { pet: slug } }) => {
+  if (slug === SEM_PETS) notFound();
+
+  const pet = await getPetBySlug(slug);
 
   return (
     <main>
-      <PetProfile pet={_pet} />
-      <SimilarPets petName={capitalizedName} />
+      <PetProfile pet={pet} />
+      <SimilarPets slug={slug} />
       <Partners />
       <Footer />
     </main>

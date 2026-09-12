@@ -1,31 +1,17 @@
-export const getImages = async () => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const rawResult = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/resources/image/upload?max_results=250`,
-    { headers: { Authorization: `Basic ${process.env.CLOUDINARY_AUTH}` } },
-  );
+const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-  const { resources } = await rawResult.json();
-  return resources.map(({ secure_url, folder }) => ({
-    url: secure_url,
-    id: folder,
-  }));
+// Transformações aplicadas direto na URL: não precisam ser cadastradas no
+// Cloudinary. Tamanhos ~2x o exibido para telas de alta densidade.
+const TransformationsMap = {
+  thumb: "c_fill,g_auto,w_120,h_120,f_auto,q_auto",
+  mini: "c_fill,g_auto,w_480,h_480,f_auto,q_auto",
+  full: "c_limit,w_1400,h_1400,f_auto,q_auto",
 };
 
-export const getImagesFromPet = async (petId) => {
-  const images = await getImages();
-  return images.filter((i) => i.id == petId).map((image) => image.url);
-};
+export const PLACEHOLDER_IMAGE = "/1.webp";
 
-export const applyTransformation = (url, transformation) => {
-  const TransformationsMap = {
-    thumb: "t_media_lib_thumb",
-    mini: "t_mini",
-    full: "t_full",
-  };
-
-  const chunks = url.split("/");
-  const index = chunks.findIndex((chunk) => chunk === "upload");
-  chunks.splice(index + 1, 0, TransformationsMap[transformation]);
-  return chunks.join("/");
-};
+// Recebe o public_id guardado na tabela `foto` (ex.: "pets/12/abc-123").
+export const imageUrl = (publicId, transformation) =>
+  publicId
+    ? `https://res.cloudinary.com/${cloudName}/image/upload/${TransformationsMap[transformation]}/${publicId}`
+    : PLACEHOLDER_IMAGE;

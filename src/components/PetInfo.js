@@ -30,6 +30,7 @@ export const PetInfo = ({ pet }) => (
         <h1>{pet.nome}</h1>
         <p>Publicado em {formatDate(pet.created_at)}</p>
       </div>
+      {pet.descricao && <p class={styles.descricao}>{pet.descricao}</p>}
     </div>
 
     <div class={styles.infoContainer}>

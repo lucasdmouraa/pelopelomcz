@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { applyTransformation } from "@/services/cloudinary";
+import { imageUrl } from "@/services/cloudinary";
 
 import styles from "./PetCard.module.css";
 
 export const PetCard = ({ pet }) => (
   <div class={styles.container}>
-    <img src={applyTransformation(pet.image, "mini")} />
+    <img src={imageUrl(pet.image, "mini")} />
     <div class={styles.details}>
       <div>
         <h3>{pet.nome}</h3>
@@ -16,7 +16,7 @@ export const PetCard = ({ pet }) => (
         {pet.idade}, {pet.porte}
       </p>
     </div>
-    <Link href={`/adote/${pet.nome.toLowerCase()}`}>
+    <Link href={`/adote/${pet.slug}`}>
       <button>Adotar</button>
     </Link>
   </div>

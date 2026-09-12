@@ -2,8 +2,8 @@ import { PetCard } from "@/components";
 import { getSimilarPets } from "@/services/supabase";
 import styles from "./SimilarPets.module.css";
 
-export const SimilarPets = async ({ petName }) => {
-  const similarPets = await getSimilarPets(petName);
+export const SimilarPets = async ({ slug }) => {
+  const similarPets = await getSimilarPets(slug);
 
   return (
     <section class="section base" id="catalog">

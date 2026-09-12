@@ -1,0 +1,25 @@
+# O plano gratuito do Supabase pausa o projeto após 7 dias sem uso. Como o site
+# é estático, visitantes não acessam o banco; esta consulta diária o mantém ativo.
+# Usa as variáveis do repositório (Settings → Secrets and variables → Actions →
+# Variables): SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY (chave pública).
+# Obs.: em repositórios públicos, o GitHub desativa agendamentos após 60 dias
+# sem nenhum commit; basta reativar em Actions.
+name: Manter Supabase ativo
+
+on:
+  schedule:
+    - cron: "17 9 * * *" # todo dia, 06:17 em Maceió
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consulta leve na API
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          curl --fail --silent --show-error \
+            "$SUPABASE_URL/rest/v1/ong?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" > /dev/null
