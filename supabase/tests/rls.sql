@@ -152,6 +152,8 @@ begin
     (91, 'authenticated', 'e', 'linhas', $q$delete from public.tratamento where medicamento = 'Colírio'$q$, '0', 'voluntário NÃO apaga tratamento'),
     (92, 'authenticated', 'b', 'linhas', $q$update public.animal set status = 'adotado' where nome = 'Paçoca'$q$, '1', '(Paçoca adotado)'),
     (93, 'authenticated', 'b', 'valor', $q$select count(*) from public.tratamento where animal_id = current_setting('teste.pacoca')::bigint and (fim is null or fim > now())$q$, '0', 'adoção encerra os tratamentos em aberto'),
+    (97, 'authenticated', 'b', 'valor', $q$select count(*) from public.doses_previstas(((current_setting('teste.ontem')::date + time '00:00') at time zone 'America/Maceio'), ((current_setting('teste.ontem')::date + 4 + time '00:00') at time zone 'America/Maceio'), current_setting('teste.pacoca')::bigint) where dose_id is null$q$, '0', 'pet adotado não tem doses pendentes na agenda'),
+    (98, 'authenticated', 'b', 'valor', $q$select count(*) from public.doses_previstas(((current_setting('teste.ontem')::date + time '00:00') at time zone 'America/Maceio'), ((current_setting('teste.ontem')::date + 4 + time '00:00') at time zone 'America/Maceio'), current_setting('teste.pacoca')::bigint) where dose_id is not null$q$, '1', 'doses já registradas continuam no histórico'),
     (94, 'anon', null, 'erro', $q$select count(*) from public.tratamento$q$, 'erro', 'anon NÃO lê tratamentos'),
     (95, 'anon', null, 'erro', $q$select count(*) from public.dose$q$, 'erro', 'anon NÃO lê doses'),
     (96, 'anon', null, 'erro', $q$select count(*) from public.doses_previstas(now(), now() + interval '1 day')$q$, 'erro', 'anon NÃO chama doses_previstas'),
