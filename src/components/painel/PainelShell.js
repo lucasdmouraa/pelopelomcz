@@ -20,6 +20,11 @@ export const usePainel = () => useContext(PainelContext);
 
 const ROTAS_PUBLICAS = ["/painel/login", "/painel/definir-senha"];
 
+const HOJE = {
+  href: "/painel/hoje",
+  rotulo: "Hoje",
+  ativo: ["/painel/hoje"],
+};
 const PETS = {
   href: "/painel",
   rotulo: "Pets",
@@ -49,10 +54,10 @@ const MINHA_ONG = {
 
 // Voluntário não vê pedidos (CPF), equipe nem o perfil da ONG
 const menu = (perfil) => {
-  if (perfil.papel === "admin") return [PETS, PEDIDOS, ONGS];
+  if (perfil.papel === "admin") return [HOJE, PETS, PEDIDOS, ONGS];
   if (perfil.funcao === "coordenacao")
-    return [PETS, PEDIDOS, EQUIPE, MINHA_ONG];
-  return [PETS];
+    return [HOJE, PETS, PEDIDOS, EQUIPE, MINHA_ONG];
+  return [HOJE, PETS];
 };
 
 export const PainelShell = ({ children }) => {
@@ -70,6 +75,15 @@ export const PainelShell = ({ children }) => {
       setSession(novaSessao),
     );
     return () => data.subscription.unsubscribe();
+  }, []);
+
+  // app instalável no celular: service worker só em produção e só no painel
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker
+      .register("/sw-painel.js", { scope: "/painel" })
+      .catch(() => {});
   }, []);
 
   const carregandoSessao = session === undefined;
@@ -148,7 +162,7 @@ export const PainelShell = ({ children }) => {
     conteudo = (
       <div className={styles.shell}>
         <header className={styles.topbar}>
-          <Link href="/painel" className={styles.brand}>
+          <Link href="/painel/hoje" className={styles.brand}>
             <img src="/1.webp" alt="" />
             <span>
               <strong>PeloPelo · Painel</strong>

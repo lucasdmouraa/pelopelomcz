@@ -19,7 +19,7 @@ export default function LoginPage() {
   } = useForm();
 
   useEffect(() => {
-    if (session) router.replace("/painel");
+    if (session) router.replace("/painel/hoje");
   }, [session, router]);
 
   const onSubmit = async ({ email, senha }) => {

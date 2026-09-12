@@ -35,7 +35,7 @@ const DefinirSenha = () => {
         linkValidado.current = true;
       }
       await definirSenha(senha);
-      router.replace("/painel");
+      router.replace("/painel/hoje");
     } catch (e) {
       setErro(e.message);
     }
