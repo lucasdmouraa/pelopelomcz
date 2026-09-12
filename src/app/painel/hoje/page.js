@@ -11,13 +11,13 @@ import {
   listarVencimentos,
   registrarDose,
 } from "@/services/painel";
-import { TipoEventoMap, formatDate } from "@/utils";
+import { TipoEventoMap, dataLocal, formatDate } from "@/utils";
 import styles from "@/components/painel/Painel.module.css";
 
 const DIA = 864e5;
 // datas "YYYY-MM-DD" vêm sem fuso: meio-dia evita virar o dia anterior
 const exibirData = (data) => formatDate(`${data}T12:00:00`);
-const hojeISO = () => new Date().toISOString().slice(0, 10);
+const hojeISO = () => dataLocal();
 
 // Tela do turno: doses do dia (com quem deu), vacinas vencendo e pedidos novos.
 export default function HojePage() {

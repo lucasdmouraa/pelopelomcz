@@ -7,6 +7,13 @@ export const scrollTo = (elem) => {
 export const formatDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString("pt-BR");
 
+// "YYYY-MM-DD" no fuso do navegador. toISOString() daria a data em UTC: depois
+// das 21h em Maceió já seria o dia seguinte.
+export const dataLocal = (data = new Date()) =>
+  new Date(data.getTime() - data.getTimezoneOffset() * 6e4)
+    .toISOString()
+    .slice(0, 10);
+
 export const formatDateTime = (dateStr) =>
   new Date(dateStr).toLocaleString("pt-BR", {
     dateStyle: "short",

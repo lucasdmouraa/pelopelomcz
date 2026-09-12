@@ -8,7 +8,7 @@ import {
   listarEventos,
   registrarEvento,
 } from "@/services/painel";
-import { TipoEventoMap, formatDate } from "@/utils";
+import { TipoEventoMap, dataLocal, formatDate } from "@/utils";
 import { usePainel } from "./PainelShell";
 import { Alert, ConfirmButton, Field } from "./ui";
 import styles from "./Painel.module.css";
@@ -18,11 +18,11 @@ const INTERVALO_SUGERIDO = { vacina: 365, vermifugo: 90, antipulgas: 30 };
 const COM_PRODUTO = ["vacina", "vermifugo", "antipulgas", "exame", "outro"];
 const COM_PROXIMA = ["vacina", "vermifugo", "antipulgas", "consulta", "outro"];
 
-const hoje = () => new Date().toISOString().slice(0, 10);
+const hoje = () => dataLocal();
 const somarDias = (data, dias) => {
   const d = new Date(`${data}T12:00:00`);
   d.setDate(d.getDate() + dias);
-  return d.toISOString().slice(0, 10);
+  return dataLocal(d);
 };
 // datas "YYYY-MM-DD" vêm sem fuso: meio-dia evita virar o dia anterior
 const exibirData = (data) => formatDate(`${data}T12:00:00`);

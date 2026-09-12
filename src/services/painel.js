@@ -1,4 +1,5 @@
 import { db } from "./supabase";
+import { dataLocal } from "@/utils";
 
 // Operações do painel (roda só no browser, com a sessão do usuário logado).
 // A RLS garante que cada ONG só enxerga e altera o que é dela.
@@ -194,7 +195,7 @@ export const apagarEvento = (id) =>
   executar(db.from("evento_saude").delete().eq("id", id));
 
 export const listarVencimentos = (dias = 7) => {
-  const ate = new Date(Date.now() + dias * 864e5).toISOString().slice(0, 10);
+  const ate = dataLocal(new Date(Date.now() + dias * 864e5));
   return executar(db.rpc("vencimentos", { ate }));
 };
 
