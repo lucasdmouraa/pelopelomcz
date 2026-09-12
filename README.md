@@ -74,7 +74,7 @@ A missão do projeto é criar impacto significativo na vida dos animais por meio
 
 ## Arquitetura
 
-O **site público** é **totalmente estático** (`output: "export"` no Next.js): os dados dos pets são buscados em **build time** via Server Components assíncronos e `generateStaticParams`. O **painel** (`/painel`) também é exportado como páginas estáticas, mas roda todo no browser, falando direto com o Supabase com a sessão de quem está logado.
+O **site público** é **estático** (`output: "export"` no Next.js): as páginas são geradas no build via Server Components assíncronos e `generateStaticParams`. E também **ao vivo**: ao abrir, catálogo, perfil do pet, semelhantes e parceiros buscam os dados atuais no banco, então foto, situação e pet novo aparecem na hora. Um pet publicado depois do último build ainda não tem página gerada; o Cloudflare serve a página de 404, que reconhece `/adote/<slug>` e monta o perfil ao vivo. O **painel** (`/painel`) também é exportado como páginas estáticas, mas roda todo no browser, falando direto com o Supabase com a sessão de quem está logado.
 
 ```
 src/
@@ -119,7 +119,7 @@ As imagens são servidas pelo Cloudinary com as transformações na própria URL
 
 ### Publicação automática
 
-Como o site é estático, um pet cadastrado no painel só aparece depois de um novo build. Toda alteração em `animal`, `foto` ou `ong` marca `site_estado.alterado_em`; um job do `pg_cron` roda a cada 5 minutos e, se houve mudança (e nenhuma nos últimos 3 minutos, para agrupar uma sessão de edição num build só), chama o **deploy hook** do Cloudflare Pages — no máximo um build a cada 10 minutos. O admin também tem o botão "Publicar agora" no painel.
+O site mostra as mudanças na hora (dados ao vivo), mas o HTML gerado no build é o que as prévias de link do WhatsApp e o Google leem, então ele continua sendo refeito automaticamente. Toda alteração em `animal`, `foto` ou `ong` marca `site_estado.alterado_em`; um job do `pg_cron` roda a cada 5 minutos e, se houve mudança (e nenhuma nos últimos 3 minutos, para agrupar uma sessão de edição num build só), chama o **deploy hook** do Cloudflare Pages — no máximo um build a cada 10 minutos. O admin também tem o botão "Publicar agora" no painel.
 
 ### Painel (`/painel`)
 

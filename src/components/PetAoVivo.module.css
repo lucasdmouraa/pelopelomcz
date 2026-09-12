@@ -1,0 +1,28 @@
+.aviso {
+  background-color: var(--white);
+  border-radius: var(--sm);
+  box-shadow: 0px 4px 20px 0px rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  margin: 55px auto 0;
+  max-width: 34rem;
+  padding: var(--md);
+  text-align: center;
+}
+
+.aviso h1 {
+  color: var(--secondary);
+}
+
+.aviso a {
+  align-self: center;
+}
+
+.carregando {
+  color: var(--text-contrast);
+  margin-top: 55px;
+  min-height: 40vh;
+  text-align: center;
+}

@@ -1,21 +1,8 @@
-import { PetCard } from "@/components";
+import { SemelhantesAoVivo } from "@/components/SemelhantesAoVivo";
 import { getSimilarPets } from "@/services/supabase";
-import styles from "./SimilarPets.module.css";
 
+// Lista do build, atualizada com os dados ao vivo ao abrir a página.
 export const SimilarPets = async ({ slug }) => {
   const similarPets = await getSimilarPets(slug);
-
-  return (
-    <section class="section base" id="catalog">
-      <div class="section-content">
-        <h2>Animais Semelhantes</h2>
-
-        <div class={styles.list}>
-          {similarPets.map((pet) => (
-            <PetCard key={pet.id} pet={pet} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <SemelhantesAoVivo slug={slug} inicial={similarPets} />;
 };

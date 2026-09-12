@@ -18,6 +18,8 @@ No test suite exists. Formatting is enforced automatically via Husky pre-commit 
 
 **PeloPelo Maceió** is a pet adoption site for Maceió, Alagoas, Brazil. It is a clone of the original Campina Grande app (`../pelopelo`) with its own partner ONGs, contacts and backend, plus a management panel for ONGs. It is a Next.js app with `output: "export"` (fully static), so there is no server runtime — public data is fetched at build time via `generateStaticParams` and async Server Components. Hosting: Cloudflare Pages.
 
+The public pages are also **live**: the build output is the first paint (and what link previews/SEO see); then client components (`CatalogComponent`, `PetAoVivo`, `SemelhantesAoVivo`, `ParceirosAoVivo`) refetch from Supabase with the public key, so photo/status changes and new pets show immediately. A pet published after the last build has no `/adote/<slug>.html`: Cloudflare serves `404.html` (`src/app/not-found.js`), whose `PaginaNaoEncontrada` recognizes `/adote/<slug>` and renders the pet live. Keep build-time and live rendering consistent (e.g. `escolherSemelhantes` is deterministic, no shuffle).
+
 ### Pages
 
 - `/` — home page: Hero → Catalog → About → Partners → Footer

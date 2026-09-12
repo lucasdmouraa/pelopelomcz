@@ -17,8 +17,9 @@ export const registerVote = (option) => db.from("votes").insert({ option });
 export const registerNewEmail = (email) =>
   db.from("newsletter").insert({ email });
 
-// A RLS já esconde da chave pública pets não disponíveis e de ONGs inativas;
-// o filtro explícito deixa a intenção clara no build.
+// Usadas no build (páginas estáticas) e no navegador (dados ao vivo). A RLS já
+// esconde da chave pública pets não disponíveis e de ONGs inativas; o filtro
+// explícito deixa a intenção clara.
 export const getAnimals = async () => {
   const { data: pets, error } = await db
     .from("animal")
@@ -40,25 +41,38 @@ export const getPetBySlug = async (slug) => {
   return formatPet(data);
 };
 
+// Ao vivo: null quando o pet não está (mais) disponível para adoção.
+export const buscarPetPublico = async (slug) => {
+  const { data, error } = await db
+    .from("animal")
+    .select(PET_FIELDS)
+    .eq("slug", slug)
+    .eq("status", "disponivel")
+    .maybeSingle();
+  if (error) throw error;
+
+  return data ? formatPet(data) : null;
+};
+
+// Até 4 pets com mais características em comum. Ordem determinística (sem
+// sorteio) para o build e a versão ao vivo mostrarem a mesma lista.
+export const escolherSemelhantes = (principal, pets) => {
+  const campos = ["especie", "sexo", "porte", "idade"];
+  const pontos = (pet) =>
+    campos.filter((campo) => pet[campo] === principal[campo]).length;
+
+  return pets
+    .filter((pet) => pet.id !== principal.id)
+    .map((pet) => ({ pet, pontos: pontos(pet) }))
+    .sort((a, b) => b.pontos - a.pontos || a.pet.id - b.pet.id)
+    .slice(0, 4)
+    .map(({ pet }) => pet);
+};
+
 export const getSimilarPets = async (slug) => {
   const pets = await getAnimals();
-
-  const mainPet = pets.find((pet) => pet.slug === slug);
-  const remainingPets = pets.filter((pet) => pet.id !== mainPet.id);
-
-  const calcSimilarity = (petA, petB) => {
-    const fieldsToConsider = ["especie", "sexo", "porte", "idade"];
-    return fieldsToConsider.filter((field) => petA[field] === petB[field])
-      .length;
-  };
-
-  const points = remainingPets.map((pet) => ({
-    ...pet,
-    points: calcSimilarity(mainPet, pet),
-  }));
-
-  const similarPets = points.sort((a, b) => b.points - a.points).splice(0, 4);
-  return shuffle(similarPets);
+  const principal = pets.find((pet) => pet.slug === slug);
+  return principal ? escolherSemelhantes(principal, pets) : [];
 };
 
 export const getOngs = async () => {

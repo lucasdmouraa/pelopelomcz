@@ -1,25 +1,46 @@
 "use client";
 
 import { range, splitEvery } from "ramda";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import c from "clsx";
 import { scrollTo } from "@/utils";
+import { getAnimals } from "@/services/supabase";
 import { PetCard } from "./PetCard";
 
 import styles from "./CatalogComponent.module.css";
 
 const PAGE_SIZE = 8;
 
+// Mostra na hora a lista do build e, ao abrir, troca pelos dados atuais do
+// banco: pet novo, foto trocada ou pet que saiu aparecem sem esperar deploy.
 export const CatalogComponent = ({ pets }) => {
+  const [lista, setLista] = useState(pets);
   const [activePageIndex, setActivePageIndex] = useState(1);
 
-  if (!pets.length) {
+  useEffect(() => {
+    let ativo = true;
+    getAnimals()
+      .then((vivos) => {
+        if (!ativo) return;
+        // mantém a ordem que a pessoa já está vendo; novos entram primeiro
+        const posicao = new Map(pets.map((pet, i) => [pet.id, i]));
+        const lugar = (pet) => posicao.get(pet.id) ?? -1;
+        setLista([...vivos].sort((a, b) => lugar(a) - lugar(b)));
+      })
+      .catch(() => {}); // sem conexão com o banco: fica a versão do build
+    return () => {
+      ativo = false;
+    };
+  }, [pets]);
+
+  if (!lista.length) {
     return <p>Nenhum pet disponível no momento. Volte em breve!</p>;
   }
 
-  const pages = Math.ceil(pets.length / PAGE_SIZE);
-  const groupedPets = splitEvery(PAGE_SIZE, pets);
-  const activePage = groupedPets[activePageIndex - 1];
+  const pages = Math.ceil(lista.length / PAGE_SIZE);
+  const groupedPets = splitEvery(PAGE_SIZE, lista);
+  const paginaAtual = Math.min(activePageIndex, pages);
+  const activePage = groupedPets[paginaAtual - 1];
 
   const handlePageChange = (newIndex) => {
     setActivePageIndex(newIndex);
@@ -37,7 +58,7 @@ export const CatalogComponent = ({ pets }) => {
         {range(1, pages + 1).map((page) => (
           <span
             key={page}
-            className={c(activePageIndex === page && styles.activePage)}
+            className={c(paginaAtual === page && styles.activePage)}
             onClick={() => handlePageChange(page)}
           >
             {page}

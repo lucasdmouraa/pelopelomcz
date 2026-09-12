@@ -1,15 +1,12 @@
-import { Album, PetInfo, Header } from "@/components";
+import { Header } from "@/components";
+import { PetAoVivo } from "@/components/PetAoVivo";
 
-import styles from "./PetProfile.module.css";
-
+// Perfil gerado no build e atualizado com os dados ao vivo ao abrir.
 export const PetProfile = ({ pet }) => (
   <section class="section primary-to-base">
     <div class="section-content">
       <Header />
-      <div class={styles.main}>
-        <Album images={pet.images} />
-        <PetInfo pet={pet} />
-      </div>
+      <PetAoVivo slug={pet.slug} inicial={pet} />
     </div>
   </section>
 );

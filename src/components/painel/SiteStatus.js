@@ -38,7 +38,7 @@ export const SiteStatus = () => {
       const disparou = await publicarAgora();
       setMensagem(
         disparou
-          ? "Publicação iniciada: o site é atualizado em cerca de 2 minutos."
+          ? "Publicação iniciada: a página gerada é atualizada em cerca de 2 minutos."
           : "O deploy hook ainda não foi configurado (veja o README).",
       );
       carregar();
@@ -51,7 +51,7 @@ export const SiteStatus = () => {
     <div className={c(styles.alert, pendente ? styles.warn : styles.info)}>
       <span>
         {pendente
-          ? "Há alterações que ainda não estão no site. Ele é atualizado automaticamente alguns minutos depois da última edição."
+          ? "Fotos, situação e pets novos já aparecem no site na hora. A página gerada (usada nas prévias de link do WhatsApp e no Google) é atualizada sozinha alguns minutos depois da última edição."
           : estado.publicado_em
           ? `Site em dia. Última publicação em ${formatDateTime(
               estado.publicado_em,
