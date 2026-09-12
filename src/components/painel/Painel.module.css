@@ -759,6 +759,188 @@
   justify-content: flex-start;
 }
 
+/* linha do tempo de saúde: linha no centro, eventos alternando dos lados */
+
+.linha {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  position: relative;
+}
+
+.linha::before {
+  background-color: var(--primary);
+  border-radius: 3px;
+  bottom: 0;
+  content: "";
+  left: 50%;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 3px;
+}
+
+.linhaItem {
+  box-sizing: border-box;
+  padding: 0 34px 22px;
+  position: relative;
+  width: 50%;
+}
+
+.linhaEsquerda {
+  left: 0;
+  text-align: right;
+}
+
+.linhaDireita {
+  left: 50%;
+}
+
+.linhaIcone {
+  align-items: center;
+  background-color: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--white);
+  color: var(--white);
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  width: 40px;
+  z-index: 1;
+}
+
+.linhaEsquerda .linhaIcone {
+  right: -20px;
+}
+
+.linhaDireita .linhaIcone {
+  left: -20px;
+}
+
+.linhaIcone svg {
+  height: 22px;
+  width: 22px;
+}
+
+.linhaCartao {
+  background-color: var(--base);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+  padding: 10px 14px;
+  position: relative;
+  text-align: left;
+}
+
+.linhaCartao p {
+  font-size: 0.88rem;
+  white-space: pre-line;
+}
+
+.linhaData {
+  color: var(--secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.linhaValor {
+  color: #1e6b33;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.linhaApagar {
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  height: 24px;
+  padding: 0 6px;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+}
+
+.linhaPrevisto .linhaCartao {
+  background-color: transparent;
+  border: 2px dashed #cfcfcf;
+}
+
+.linhaPrevisto .linhaIcone {
+  background-color: var(--white);
+  border: 2px dashed currentColor;
+  box-shadow: 0 0 0 4px var(--white);
+  color: var(--primary);
+}
+
+.linhaAtrasado .linhaCartao {
+  border-color: var(--error);
+}
+
+.linhaAtrasado .linhaIcone {
+  color: var(--error);
+}
+
+/* uma cor por tipo de evento */
+.icone_vacina {
+  background-color: #3b7fc4;
+}
+.icone_vermifugo {
+  background-color: #8a5cc4;
+}
+.icone_antipulgas {
+  background-color: #c4812c;
+}
+.icone_consulta {
+  background-color: #2a9d8f;
+}
+.icone_exame {
+  background-color: #5f7189;
+}
+.icone_castracao,
+.icone_cirurgia {
+  background-color: #c4504a;
+}
+.icone_peso {
+  background-color: #d49a1a;
+}
+.icone_cadastro {
+  background-color: var(--secondary);
+}
+.icone_entrada {
+  background-color: var(--primary);
+}
+.icone_obito {
+  background-color: #555;
+}
+
+/* celular: linha à esquerda, todos os cartões do mesmo lado */
+@media (max-width: 640px) {
+  .linha::before {
+    left: 20px;
+  }
+
+  .linhaItem,
+  .linhaDireita {
+    left: 0;
+    padding: 0 0 18px 56px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .linhaEsquerda .linhaIcone,
+  .linhaDireita .linhaIcone {
+    left: 0;
+    right: auto;
+  }
+}
+
 .inlineForm {
   background-color: var(--base);
   border-radius: 10px;

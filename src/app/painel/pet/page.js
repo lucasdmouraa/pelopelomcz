@@ -153,7 +153,7 @@ const PetEditor = () => {
           {pet.id && (
             <section className={styles.card}>
               <h2>Saúde</h2>
-              <SaudeEditor animalId={pet.id} />
+              <SaudeEditor animal={pet} />
             </section>
           )}
 

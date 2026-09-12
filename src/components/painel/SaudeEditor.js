@@ -5,10 +5,12 @@ import { useForm } from "react-hook-form";
 import c from "clsx";
 import {
   apagarEvento,
+  buscarFicha,
   listarEventos,
   registrarEvento,
 } from "@/services/painel";
 import { TipoEventoMap, dataLocal, formatDate } from "@/utils";
+import { IconeEvento } from "./IconeEvento";
 import { usePainel } from "./PainelShell";
 import { Alert, ConfirmButton, Field } from "./ui";
 import styles from "./Painel.module.css";
@@ -25,27 +27,22 @@ const somarDias = (data, dias) => {
   return dataLocal(d);
 };
 // datas "YYYY-MM-DD" vêm sem fuso: meio-dia evita virar o dia anterior
-const exibirData = (data) => formatDate(`${data}T12:00:00`);
-
+const meioDia = (data) => `${data}T12:00:00`;
+const exibirData = (data) => formatDate(meioDia(data));
 const diasAte = (data) =>
-  Math.round(
-    (new Date(`${data}T12:00:00`) - new Date(`${hoje()}T12:00:00`)) / 864e5,
-  );
-
-const situacaoLembrete = (evento) => {
-  if (!evento.proxima_data) return null;
-  if (evento.lembrete_resolvido)
-    return { classe: styles.recusado, texto: "resolvido" };
-  const dias = diasAte(evento.proxima_data);
-  if (dias < 0)
-    return { classe: styles.vencido, texto: `vencido há ${-dias} dia(s)` };
-  if (dias <= 7)
-    return {
-      classe: styles.em_processo,
-      texto: dias === 0 ? "vence hoje" : `vence em ${dias} dia(s)`,
-    };
-  return { classe: styles.disponivel, texto: `em ${dias} dias` };
-};
+  Math.round((new Date(meioDia(data)) - new Date(meioDia(hoje()))) / 864e5);
+const dinheiro = (valor) =>
+  Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const quilos = (valor) =>
+  `${Number(valor).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} kg`;
+const registradoEm = (instante) =>
+  new Date(instante).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 const EventoForm = ({ onSubmit, onCancel }) => {
   const {
@@ -155,19 +152,111 @@ const EventoForm = ({ onSubmit, onCancel }) => {
   );
 };
 
+// Monta os itens da linha do tempo: cadastro e entrada (da ficha), eventos de
+// saúde, óbito e os lembretes ainda pendentes (previstos ou atrasados).
+const montarLinha = (animal, ficha, eventos) => {
+  const itens = [
+    {
+      chave: "cadastro",
+      tipo: "cadastro",
+      quando: ficha?.cadastrado_em ?? animal.created_at,
+      titulo: "Cadastrado no painel",
+      por: ficha?.cadastrado_por_nome,
+      registrado: ficha?.cadastrado_em ?? animal.created_at,
+    },
+  ];
+  if (ficha?.data_entrada) {
+    itens.push({
+      chave: "entrada",
+      tipo: "entrada",
+      quando: meioDia(ficha.data_entrada),
+      titulo: "Chegou à ONG",
+      detalhes: [ficha.origem_resgate, ficha.condicao_chegada],
+    });
+  }
+
+  let pesoAnterior = null;
+  [...eventos]
+    .sort((a, b) => a.data.localeCompare(b.data) || a.id - b.id)
+    .forEach((e) => {
+      const detalhes = [e.descricao];
+      if (e.tipo === "peso" && pesoAnterior) {
+        const diferenca = Number(e.peso_kg) - Number(pesoAnterior.peso_kg);
+        detalhes.unshift(
+          diferenca === 0
+            ? `Mesmo peso de ${exibirData(pesoAnterior.data)}`
+            : `${diferenca > 0 ? "+" : "−"}${quilos(
+                Math.abs(diferenca),
+              )} desde ${exibirData(pesoAnterior.data)}`,
+        );
+      }
+      if (e.tipo === "peso") pesoAnterior = e;
+      itens.push({
+        chave: `evento-${e.id}`,
+        tipo: e.tipo,
+        quando: meioDia(e.data),
+        titulo:
+          e.tipo === "peso"
+            ? `Peso: ${quilos(e.peso_kg)}`
+            : `${TipoEventoMap[e.tipo]}${e.produto ? ` · ${e.produto}` : ""}`,
+        detalhes,
+        valor: e.valor,
+        por: e.registrado_por_nome,
+        registrado: e.registrado_em,
+        evento: e,
+      });
+      // lembrete pendente vira item previsto (ou atrasado) na data prevista
+      if (e.proxima_data && !e.lembrete_resolvido) {
+        const dias = diasAte(e.proxima_data);
+        itens.push({
+          chave: `previsto-${e.id}`,
+          tipo: e.tipo,
+          quando: meioDia(e.proxima_data),
+          titulo: `${e.tipo === "consulta" ? "Retorno" : "Próxima dose"} · ${
+            e.produto || TipoEventoMap[e.tipo]
+          }`,
+          detalhes: [
+            dias < 0
+              ? `Atrasada há ${-dias} dia(s)`
+              : dias === 0
+              ? "É hoje"
+              : `Daqui a ${dias} dia(s)`,
+          ],
+          previsto: true,
+          atrasado: dias < 0,
+        });
+      }
+    });
+
+  if (ficha?.data_obito) {
+    itens.push({
+      chave: "obito",
+      tipo: "obito",
+      quando: meioDia(ficha.data_obito),
+      titulo: "Faleceu",
+      detalhes: [ficha.causa_obito],
+    });
+  }
+  return itens.sort((a, b) => new Date(a.quando) - new Date(b.quando));
+};
+
 // Linha do tempo de saúde do animal + registro de novos eventos.
-export const SaudeEditor = ({ animalId }) => {
+export const SaudeEditor = ({ animal }) => {
   const { perfil, isCoordenacao } = usePainel();
   const [eventos, setEventos] = useState(null);
+  const [ficha, setFicha] = useState(null);
   const [formAberto, setFormAberto] = useState(false);
   const [erro, setErro] = useState(null);
 
   const carregar = useCallback(
     () =>
-      listarEventos(animalId)
-        .then(setEventos)
+      Promise.all([listarEventos(animal.id), buscarFicha(animal.id)])
+        .then(([lista, dadosFicha]) => {
+          setEventos(lista);
+          setFicha(dadosFicha);
+        })
         .catch((e) => setErro(e.message)),
-    [animalId],
+    [animal.id],
   );
 
   useEffect(() => {
@@ -177,7 +266,7 @@ export const SaudeEditor = ({ animalId }) => {
   const registrar = async (dados) => {
     setErro(null);
     try {
-      await registrarEvento(animalId, dados);
+      await registrarEvento(animal.id, dados);
       setFormAberto(false);
       carregar();
     } catch (e) {
@@ -195,28 +284,11 @@ export const SaudeEditor = ({ animalId }) => {
     }
   };
 
-  const pendentes = eventos?.filter(
-    (e) => e.proxima_data && !e.lembrete_resolvido,
-  );
+  const itens = eventos ? montarLinha(animal, ficha, eventos) : [];
 
   return (
     <>
       <Alert tipo="error">{erro}</Alert>
-      {pendentes?.length > 0 && (
-        <div className={c(styles.alert, styles.warn)}>
-          <span>
-            <strong>Próximos:</strong>{" "}
-            {pendentes
-              .map(
-                (e) =>
-                  `${e.produto || TipoEventoMap[e.tipo]} em ${exibirData(
-                    e.proxima_data,
-                  )}`,
-              )
-              .join(" · ")}
-          </span>
-        </div>
-      )}
 
       {formAberto ? (
         <EventoForm
@@ -228,59 +300,58 @@ export const SaudeEditor = ({ animalId }) => {
           type="button"
           className={c(styles.btn, styles.btnGhost, styles.btnSmall)}
           onClick={() => setFormAberto(true)}
-          style={{ marginTop: 12 }}
         >
           + Registrar vacina, consulta, peso…
         </button>
       )}
 
       {!eventos && !erro && <p className={styles.muted}>Carregando…</p>}
-      {eventos?.length === 0 && (
-        <p className={styles.muted} style={{ marginTop: 12 }}>
-          Nenhum registro de saúde ainda.
-        </p>
-      )}
 
-      <ol className={styles.timeline}>
-        {eventos?.map((evento) => {
-          const lembrete = situacaoLembrete(evento);
+      <ol className={styles.linha}>
+        {itens.map((item, i) => {
           const podeApagar =
-            isCoordenacao || evento.registrado_por === perfil.user_id;
+            item.evento &&
+            (isCoordenacao || item.evento.registrado_por === perfil.user_id);
           return (
-            <li key={evento.id} className={styles.timelineItem}>
-              <div className={styles.timelineHeader}>
-                <span>
-                  <strong>{TipoEventoMap[evento.tipo]}</strong>
-                  {evento.produto && ` · ${evento.produto}`}
-                  {evento.peso_kg &&
-                    ` · ${Number(evento.peso_kg).toLocaleString("pt-BR")} kg`}
+            <li
+              key={item.chave}
+              className={c(
+                styles.linhaItem,
+                i % 2 ? styles.linhaDireita : styles.linhaEsquerda,
+                item.previsto && styles.linhaPrevisto,
+                item.atrasado && styles.linhaAtrasado,
+              )}
+            >
+              <span
+                className={c(styles.linhaIcone, styles[`icone_${item.tipo}`])}
+                title={TipoEventoMap[item.tipo] ?? item.titulo}
+              >
+                <IconeEvento tipo={item.tipo} />
+              </span>
+              <div className={styles.linhaCartao}>
+                <span className={styles.linhaData}>
+                  {formatDate(item.quando)}
                 </span>
-                <span className={styles.muted}>{exibirData(evento.data)}</span>
-              </div>
-              {evento.descricao && <p>{evento.descricao}</p>}
-              <div className={styles.timelineFooter}>
-                {lembrete && (
-                  <span className={c(styles.badge, lembrete.classe)}>
-                    {evento.tipo === "consulta" ? "Retorno" : "Próxima"}{" "}
-                    {exibirData(evento.proxima_data)} · {lembrete.texto}
+                <strong>{item.titulo}</strong>
+                {item.detalhes?.filter(Boolean).map((texto) => (
+                  <p key={texto}>{texto}</p>
+                ))}
+                {item.valor != null && (
+                  <span className={styles.linhaValor}>
+                    {dinheiro(item.valor)}
                   </span>
                 )}
-                {evento.valor != null && (
-                  <span className={styles.muted}>
-                    R${" "}
-                    {Number(evento.valor).toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
+                {item.registrado && (
+                  <small className={styles.muted}>
+                    Registrado por {item.por ?? "—"} em{" "}
+                    {registradoEm(item.registrado)}
+                  </small>
                 )}
-                <span className={styles.muted}>
-                  por {evento.registrado_por_nome ?? "—"}
-                </span>
                 {podeApagar && (
                   <ConfirmButton
-                    className={styles.iconBtn}
-                    confirmText="Apagar?"
-                    onConfirm={() => apagar(evento)}
+                    className={styles.linhaApagar}
+                    confirmText="Apagar registro?"
+                    onConfirm={() => apagar(item.evento)}
                     aria-label="Apagar registro"
                   >
                     ✕

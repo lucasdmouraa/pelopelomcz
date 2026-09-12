@@ -307,8 +307,10 @@ def popular():
         (carla, nina, {"data_entrada": "2018-08-20", "origem_resgate": "Entregue por tutora que se mudou",
                        "data_obito": dia(-20), "causa_obito": "Insuficiência renal crônica"}),
     ]
+    # a ficha nasce junto com o pet (trigger): aqui só completa (upsert)
     for token, animal, dados in fichas:
-        ok(rest(token, "POST", "animal_ficha", {"animal_id": animal["id"], **dados}), f"ficha {animal['nome']}")
+        ok(req("POST", f"{API}/rest/v1/animal_ficha", token, {"animal_id": animal["id"], **dados},
+               {"Prefer": "resolution=merge-duplicates"}), f"ficha {animal['nome']}")
     print("fichas: Dona Flor, Bigode, Pipoca, Bolinha e Nina")
 
     # prontuário (mais antigo primeiro: o reforço resolve o aviso anterior)

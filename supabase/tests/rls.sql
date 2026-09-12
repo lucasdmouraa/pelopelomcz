@@ -97,13 +97,13 @@ begin
     (42, 'authenticated', 'e', 'linhas', $q$update public.animal set status = 'morador' where nome = 'Paçoca'$q$, '-1', 'voluntário NÃO muda a situação'),
     (43, 'authenticated', 'e', 'linhas', $q$update public.animal set idade = '4 anos' where nome = 'Paçoca'$q$, '1', 'voluntário edita dados do pet'),
     (44, 'authenticated', 'e', 'valor', $q$select count(*) from public.perfil$q$, '2', 'voluntário vê só a própria equipe'),
-    (45, 'authenticated', 'e', 'erro', $q$insert into public.animal_ficha (animal_id, origem_resgate) select id, 'Praça' from public.animal where nome = 'Paçoca'$q$, 'passou', 'voluntário preenche a ficha'),
+    (45, 'authenticated', 'e', 'linhas', $q$update public.animal_ficha set origem_resgate = 'Praça' where animal_id = current_setting('teste.pacoca')::bigint$q$, '1', 'voluntário preenche a ficha'),
     (46, 'authenticated', 'e', 'valor', $q$select f.registrado_por_nome from public.animal_ficha f join public.animal a on a.id = f.animal_id where a.nome = 'Paçoca'$q$, 'Vol Pata', 'ficha registra o autor'),
-    (47, 'authenticated', 'e', 'erro', $q$insert into public.animal_ficha (animal_id) select id from public.animal where nome = 'Trovão'$q$, 'erro', 'NÃO preenche ficha de pet de outra ONG'),
+    (47, 'authenticated', 'e', 'linhas', $q$update public.animal_ficha set observacoes = 'x' where animal_id = current_setting('teste.trovao')::bigint$q$, '0', 'NÃO preenche ficha de pet de outra ONG'),
 
     (48, 'authenticated', 'b', 'linhas', $q$update public.animal set status = 'disponivel' where nome = 'João'$q$, '1', 'coordenação publica pet'),
-    (49, 'authenticated', 'b', 'valor', $q$select count(*) from public.animal_ficha$q$, '1', 'coordenação vê a ficha feita pela equipe'),
-    (50, 'authenticated', 'c', 'valor', $q$select count(*) from public.animal_ficha$q$, '0', 'outra ONG NÃO vê a ficha'),
+    (49, 'authenticated', 'b', 'valor', $q$select count(*) from public.animal_ficha where origem_resgate is not null$q$, '1', 'coordenação vê a ficha feita pela equipe'),
+    (50, 'authenticated', 'c', 'valor', $q$select count(*) from public.animal_ficha where ong_id = current_setting('teste.pata')::bigint$q$, '0', 'outra ONG NÃO vê a ficha'),
 
     (51, 'authenticated', 'a', 'valor', $q$select count(*) from public.animal$q$, '8', 'admin vê todos os pets'),
     (52, 'authenticated', 'a', 'valor', $q$select count(*) from public.adoption_request$q$, '2', 'admin vê todos os pedidos'),
@@ -175,6 +175,11 @@ begin
     (113, 'authenticated', 'c', 'valor', $q$select count(*) from storage.objects where bucket_id = 'documentos'$q$, '0', 'Storage: outra ONG NÃO vê os arquivos'),
     (114, 'anon', null, 'valor', $q$select count(*) from storage.objects where bucket_id = 'documentos'$q$, '0', 'Storage: anon NÃO vê arquivos'),
     (115, 'authenticated', 'a', 'linhas', $q$update public.animal set ong_id = current_setting('teste.sos')::bigint where id = current_setting('teste.melpata')::bigint$q$, '-1', 'pet com documentos NÃO troca de ONG'),
+
+    -- linha do tempo: quem cadastrou o pet (na ficha, nunca em `animal`)
+    (116, 'authenticated', 'e', 'valor', $q$select f.cadastrado_por_nome from public.animal_ficha f join public.animal a on a.id = f.animal_id where a.nome = 'Vol Pet'$q$, 'Vol Pata', 'ficha nasce com quem cadastrou o pet'),
+    (117, 'authenticated', 'e', 'linhas', $q$update public.animal_ficha f set cadastrado_por_nome = 'Outra pessoa' from public.animal a where a.id = f.animal_id and a.nome = 'Vol Pet'$q$, '1', '(tenta trocar quem cadastrou)'),
+    (118, 'authenticated', 'e', 'valor', $q$select f.cadastrado_por_nome from public.animal_ficha f join public.animal a on a.id = f.animal_id where a.nome = 'Vol Pet'$q$, 'Vol Pata', 'quem cadastrou não pode ser alterado'),
 
     (198, 'postgres', null, 'valor', $q$select alterado_em is not null from public.site_estado$q$, 'true', 'alterações marcam site_estado'),
     (199, 'postgres', null, 'valor', $q$select count(*) from cron.job where jobname = 'publicar-site'$q$, '1', 'job do cron agendado')
