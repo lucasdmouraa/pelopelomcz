@@ -198,6 +198,91 @@ export const listarVencimentos = (dias = 7) => {
   return executar(db.rpc("vencimentos", { ate }));
 };
 
+// Remédios. A agenda não se edita ("Alterar" encerra e cria outro); as doses
+// previstas são geradas pelo banco (doses_previstas) e só a dose dada vira
+// linha em `dose` — o banco recusa dose repetida e horário fora da agenda.
+const CAMPOS_TRATAMENTO = [
+  "medicamento",
+  "dose",
+  "via",
+  "instrucoes",
+  "horarios",
+  "intervalo_dias",
+  "inicio",
+  "fim",
+  "substitui_id",
+];
+
+export const listarTratamentos = (animalId) =>
+  executar(
+    db
+      .from("tratamento")
+      .select("*")
+      .eq("animal_id", animalId)
+      .order("inicio", { ascending: false }),
+  );
+
+export const criarTratamento = (animalId, tratamento) => {
+  const dados = Object.fromEntries(
+    CAMPOS_TRATAMENTO.map((campo) => [campo, tratamento[campo] ?? null]),
+  );
+  dados.horarios = tratamento.horarios ?? [];
+  return executar(
+    db
+      .from("tratamento")
+      .insert({ animal_id: animalId, ...dados })
+      .select()
+      .single(),
+  );
+};
+
+export const encerrarTratamento = (id) =>
+  executar(
+    db
+      .from("tratamento")
+      .update({ fim: new Date().toISOString() })
+      .eq("id", id),
+  );
+
+export const substituirTratamento = async (antigo, novo) => {
+  await encerrarTratamento(antigo.id);
+  return criarTratamento(antigo.animal_id, {
+    ...novo,
+    substitui_id: antigo.id,
+  });
+};
+
+export const dosesPrevistas = (de, ate, animalId = null) =>
+  executar(
+    db.rpc("doses_previstas", {
+      de: new Date(de).toISOString(),
+      ate: new Date(ate).toISOString(),
+      p_animal: animalId,
+    }),
+  );
+
+export const registrarDose = async ({
+  tratamentoId,
+  previstoPara,
+  pulada = false,
+  observacao = null,
+}) => {
+  const { error } = await db.from("dose").insert({
+    tratamento_id: tratamentoId,
+    previsto_para: previstoPara,
+    pulada,
+    observacao,
+  });
+  if (error?.code === "23505")
+    throw new Error(
+      "Essa dose já tinha sido registrada por outra pessoa. A lista foi atualizada.",
+    );
+  if (error) throw traduzirErro(error);
+};
+
+export const apagarDose = (id) =>
+  executar(db.from("dose").delete().eq("id", id));
+
 // Fotos (upload direto do browser para o Cloudinary, assinado pela Edge Function)
 
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // limite do plano gratuito do Cloudinary

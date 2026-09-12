@@ -10,6 +10,7 @@ import {
   FichaEditor,
   FotosEditor,
   PetForm,
+  RemediosEditor,
   SaudeEditor,
   usePainel,
 } from "@/components/painel";
@@ -152,6 +153,13 @@ const PetEditor = () => {
             <section className={styles.card}>
               <h2>Saúde</h2>
               <SaudeEditor animalId={pet.id} />
+            </section>
+          )}
+
+          {pet.id && (
+            <section className={styles.card}>
+              <h2>Remédios</h2>
+              <RemediosEditor animalId={pet.id} />
             </section>
           )}
 

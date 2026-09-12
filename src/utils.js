@@ -43,6 +43,14 @@ export const FuncaoMap = {
   coordenacao: "Coordenação",
   voluntario: "Voluntário(a)",
 };
+export const ViaMap = {
+  oral: "Oral",
+  injetavel: "Injetável",
+  topico: "Na pele",
+  colirio: "Nos olhos",
+  ouvido: "No ouvido",
+  outro: "Outra via",
+};
 export const TipoEventoMap = {
   vacina: "Vacina",
   vermifugo: "Vermífugo",
