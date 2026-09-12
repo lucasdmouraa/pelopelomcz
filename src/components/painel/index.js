@@ -1,4 +1,5 @@
 export * from "./Acessos";
+export * from "./DocumentosEditor";
 export * from "./FichaEditor";
 export * from "./FotosEditor";
 export * from "./PainelShell";

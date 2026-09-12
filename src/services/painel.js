@@ -1,4 +1,5 @@
 import { db } from "./supabase";
+import { reduzirImagem } from "./imagem";
 import { dataLocal } from "@/utils";
 
 // Operações do painel (roda só no browser, com a sessão do usuário logado).
@@ -283,6 +284,78 @@ export const registrarDose = async ({
 
 export const apagarDose = (id) =>
   executar(db.from("dose").delete().eq("id", id));
+
+// Documentos privados (Supabase Storage, bucket `documentos`). Caminho:
+// ong/<ong>/<equipe|restrito>/<animal>/<uuid>.<ext> — as políticas do Storage
+// e a tabela `documento` conferem ONG, pasta e pet.
+const TIPOS_DOCUMENTO = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+const LIMITE_DOCUMENTO = 5 * 1024 * 1024;
+
+export const listarDocumentos = (animalId) =>
+  executar(
+    db
+      .from("documento")
+      .select("*")
+      .eq("animal_id", animalId)
+      .order("registrado_em", { ascending: false }),
+  );
+
+export const enviarDocumento = async ({
+  animalId,
+  ongId,
+  arquivo,
+  tipo,
+  restrito,
+}) => {
+  const final = await reduzirImagem(arquivo);
+  if (!TIPOS_DOCUMENTO.includes(final.type))
+    throw new Error(`${arquivo.name}: envie foto (JPG, PNG, WEBP) ou PDF.`);
+  if (final.size > LIMITE_DOCUMENTO)
+    throw new Error(`${arquivo.name}: passa de 5 MB.`);
+
+  const extensao =
+    final.type === "application/pdf" ? "pdf" : final.type.split("/")[1];
+  const pasta = restrito ? "restrito" : "equipe";
+  const caminho = `ong/${ongId}/${pasta}/${animalId}/${crypto.randomUUID()}.${extensao}`;
+
+  const { error: erroEnvio } = await db.storage
+    .from("documentos")
+    .upload(caminho, final, { contentType: final.type, upsert: false });
+  if (erroEnvio) throw new Error(`${arquivo.name}: ${erroEnvio.message}`);
+
+  const { error } = await db.from("documento").insert({
+    animal_id: animalId,
+    tipo,
+    nome: arquivo.name,
+    caminho,
+    mime: final.type,
+    tamanho: final.size,
+    restrito,
+  });
+  if (error) {
+    // não deixa arquivo órfão no Storage
+    await db.storage.from("documentos").remove([caminho]);
+    throw traduzirErro(error);
+  }
+};
+
+export const abrirDocumento = async (caminho) => {
+  const { data, error } = await db.storage
+    .from("documentos")
+    .createSignedUrl(caminho, 120);
+  if (error) throw new Error("Não foi possível abrir o documento.");
+  return data.signedUrl;
+};
+
+export const apagarDocumento = async (documento) => {
+  await executar(db.from("documento").delete().eq("id", documento.id));
+  await db.storage.from("documentos").remove([documento.caminho]);
+};
 
 // Fotos (upload direto do browser para o Cloudinary, assinado pela Edge Function)
 

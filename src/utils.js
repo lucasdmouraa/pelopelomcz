@@ -50,6 +50,15 @@ export const FuncaoMap = {
   coordenacao: "Coordenação",
   voluntario: "Voluntário(a)",
 };
+export const TipoDocumentoMap = {
+  exame: "Exame",
+  receita: "Receita",
+  carteira_vacinacao: "Carteira de vacinação",
+  laudo: "Laudo",
+  termo_adocao: "Termo de adoção",
+  nota_fiscal: "Nota ou recibo",
+  outro: "Outro",
+};
 export const ViaMap = {
   oral: "Oral",
   injetavel: "Injetável",

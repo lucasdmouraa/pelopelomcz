@@ -104,6 +104,15 @@ servir(async (perfil, body) => {
       const { data: fotos } = await admin.from("foto").select("public_id").eq("animal_id", animal.id);
       for (const foto of fotos ?? []) await destruir(foto.public_id);
 
+      // documentos privados no Storage (as linhas somem em cascata com o animal)
+      const { data: documentos } = await admin.from("documento").select("caminho").eq("animal_id", animal.id);
+      if (documentos?.length) {
+        const { error: erroStorage } = await admin.storage
+          .from("documentos")
+          .remove(documentos.map((d) => d.caminho));
+        if (erroStorage) throw erroStorage;
+      }
+
       const { error } = await admin.from("animal").delete().eq("id", animal.id);
       if (error) throw error;
       return json({ ok: true });

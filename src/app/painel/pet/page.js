@@ -7,6 +7,7 @@ import c from "clsx";
 import {
   Alert,
   ConfirmButton,
+  DocumentosEditor,
   FichaEditor,
   FotosEditor,
   PetForm,
@@ -160,6 +161,13 @@ const PetEditor = () => {
             <section className={styles.card}>
               <h2>Remédios</h2>
               <RemediosEditor animalId={pet.id} />
+            </section>
+          )}
+
+          {pet.id && (
+            <section className={styles.card}>
+              <h2>Documentos</h2>
+              <DocumentosEditor animalId={pet.id} ongId={pet.ong_id} />
             </section>
           )}
 
