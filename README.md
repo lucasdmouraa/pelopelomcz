@@ -216,7 +216,7 @@ Os próximos acessos (de ONGs ou de outros admins) são criados pelo próprio pa
 
 1. **Workers & Pages → Create → Pages → Connect to Git** e escolha o repositório.
 2. Build: preset **Next.js (Static HTML Export)**, comando `npm run build`, pasta de saída `out`.
-3. **Environment variables**: as três `NEXT_PUBLIC_*` de produção e `NODE_VERSION` = `22`.
+3. **Environment variables**: as três `NEXT_PUBLIC_*` de produção e `NODE_VERSION` = `24` (mesma versão usada no desenvolvimento). Atenção ao comando: é `npm run build`, não `npx run build`.
 4. **Settings → Builds → Deploy hooks**: crie um hook para a branch `main` e guarde a URL no Vault do Supabase, pelo **SQL Editor**:
 
    ```sql

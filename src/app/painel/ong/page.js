@@ -141,7 +141,8 @@ const OngEditor = () => {
   const id = useSearchParams().get("id");
   const router = useRouter();
   const { perfil, isAdmin, recarregarPerfil } = usePainel();
-  const ongId = id ? Number(id) : isAdmin ? null : perfil.ong_id;
+  // ONG sempre edita a própria; só o admin escolhe (ou cria) pelo ?id=
+  const ongId = isAdmin ? (id ? Number(id) : null) : perfil.ong_id;
   const [ong, setOng] = useState(null);
   const [erro, setErro] = useState(null);
   const [aviso, setAviso] = useState(null);

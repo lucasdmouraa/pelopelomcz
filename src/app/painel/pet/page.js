@@ -48,9 +48,13 @@ const PetEditor = () => {
     if (!id) return setPet(novoPet(perfil.ong_id));
     setPet(null);
     buscarPet(id)
-      .then((dados) => setPet({ ...dados, descricao: dados.descricao ?? "" }))
+      .then((dados) => {
+        // pets disponíveis de outras ONGs são públicos, mas não editáveis aqui
+        if (!isAdmin && dados.ong_id !== perfil.ong_id) throw new Error();
+        setPet({ ...dados, descricao: dados.descricao ?? "" });
+      })
       .catch(() => setErro("Pet não encontrado."));
-  }, [id, perfil.ong_id]);
+  }, [id, perfil.ong_id, isAdmin]);
 
   const salvar = async (dados) => {
     setErro(null);
